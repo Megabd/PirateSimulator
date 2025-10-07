@@ -247,11 +247,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 392e5b13e8577be4d8bb69613d16ac91, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
-  health: 100
+  health: 1000
   turnSpeed: 100
-  speed: 3
+  speed: 2
+  senseRadius: 60
+  sampleOffset: 25
   target: {x: 0, y: 0, z: 0}
   targetChangeIntervalRange: {x: 5, y: 15}
+  teamRed: 0
 --- !u!1 &3304745712744724029
 GameObject:
   m_ObjectHideFlags: 0

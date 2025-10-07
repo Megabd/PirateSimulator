@@ -6,19 +6,24 @@ public class CannonBall : MonoBehaviour
     [SerializeField] float speed = 10f;
     [SerializeField] float lifeTime = 10f;
 
+    private Sea sea;
     private float timer = 0f;
     void Awake()
     {
         // keep it normalized so "speed" is in units/second
         if (direction.sqrMagnitude > 0.0001f)
             direction = direction.normalized;
+        sea = FindFirstObjectByType<Sea>();
     }
 
     void Update()
     {
         timer += Time.deltaTime;
         if (timer > lifeTime) Destroy(gameObject);
-        transform.position += direction * speed * Time.deltaTime;
+
+        // Apply wind from Sea
+        Vector3 windXZ = new Vector3(sea.WindDirection.x, 0f, sea.WindDirection.y);
+        transform.position += (direction * speed + windXZ) * Time.deltaTime;
     }
 
     public void Init(Vector3 dir)

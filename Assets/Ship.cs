@@ -7,22 +7,36 @@ public class Ship : MonoBehaviour
     [SerializeField] int health = 100;
     [SerializeField] float turnSpeed = 100f; // deg/sec
     [SerializeField] float speed = 3f;       // units/sec
+    [SerializeField] float senseRadius = 10f;          // who counts as nearby
+    [SerializeField] float sampleOffset = 5f;         // how far F/L/R samples are
 
     [Header("Wandering")]
     [SerializeField] Vector3 target;
-    [SerializeField] Vector2 targetChangeIntervalRange = new Vector2(5f, 15f);
 
-    float targetChangeInterval;
+    [SerializeField] float targetChangeInterval = 3f;
     float timer;
     float fixedY; // lock Y here
     Sea sea;
 
+    public bool teamRed;
+
+    public void Init(bool teamR)
+    {
+        teamRed = teamR;
+    }
     void Start()
     {
         sea = FindFirstObjectByType<Sea>();
         fixedY = transform.position.y; // remember our water level
         target = sea.GetRandomPointInSea();
-        targetChangeInterval = Random.Range(targetChangeIntervalRange.x, targetChangeIntervalRange.y);
+        var renderer = GetComponentInChildren<Renderer>();
+        if (renderer != null)
+        {
+            if (teamRed)
+                renderer.material.color = Color.red;
+            else
+                renderer.material.color = Color.blue;
+        }
     }
 
     void Update()
@@ -31,8 +45,7 @@ public class Ship : MonoBehaviour
         timer += Time.deltaTime;
         if (timer >= targetChangeInterval)
         {
-            target = sea.GetRandomPointInSea();
-            targetChangeInterval = Random.Range(targetChangeIntervalRange.x, targetChangeIntervalRange.y);
+            target = ChooseTargetPosition();
             timer = 0f;
         }
 
@@ -49,7 +62,8 @@ public class Ship : MonoBehaviour
 
         // move forward on XZ only
         Vector3 forwardXZ = new Vector3(transform.up.x, 0f, transform.up.z).normalized;
-        transform.position += forwardXZ * speed * Time.deltaTime;
+        Vector3 windXZ = new Vector3(sea.WindDirection.x, 0f, sea.WindDirection.y);
+        transform.position += (forwardXZ * speed + windXZ) * Time.deltaTime;    
 
         // hard-lock Y
         var p = transform.position;
@@ -60,6 +74,52 @@ public class Ship : MonoBehaviour
     {
         health -= dmg;
         if (health <= 0) Destroy(gameObject);
+    }
+
+    // Choose a new target position by sampling forward, left, and right, and choosing the one with most allies and at least 1 enemy
+    private Vector3 ChooseTargetPosition()
+    {
+        Vector3 pos = transform.position;
+
+        // Build an XZ basis: forward from transform.up, right via cross
+        Vector3 fwd = new Vector3(transform.up.x, 0f, transform.up.z).normalized;
+        Vector3 right = Vector3.Cross(Vector3.up, fwd).normalized;
+
+        // Sample points: forward, left, right
+        Vector3[] samples = new Vector3[4] {
+            pos + fwd   * sampleOffset,
+            pos - right * sampleOffset,
+            pos + right * sampleOffset,
+            pos - fwd * sampleOffset
+        };
+
+        foreach (var s in samples)
+        {
+            if (!sea.IsWithinSeaBounds(s)) continue;
+            var hits = Physics.OverlapSphere(s, senseRadius);
+            bool hasEnemies = false;
+            int allyToEnemyCount = 0;
+
+            foreach (var hit in hits)
+            {
+                if (hit.TryGetComponent<Ship>(out var ship))
+                {
+                    if (ship == this) continue; // skip self
+                    if (ship.teamRed == this.teamRed)
+                        allyToEnemyCount++;
+                    else { 
+                        hasEnemies = true;
+                        allyToEnemyCount--; // enemies count negatively
+                    }
+                }
+            }
+            if (hasEnemies && allyToEnemyCount > 0)
+            {
+                return s;
+            }
+        }
+        return sea.GetRandomPointInSea(); // fallback to random
+
     }
 
     void OnDrawGizmosSelected()

@@ -10,8 +10,13 @@ public class Cannon : MonoBehaviour
     [SerializeField] Vector2 RandomDelayInterval = new Vector2(0.1f, 0.5f); // random delay variation
 
     private float timer = 0f;
+    private Ship parentShip;
 
 
+    private void Start()
+    {
+        parentShip = GetComponentInParent<Ship>();
+    }
     void Update()
     {
         timer -= Time.deltaTime;
@@ -22,13 +27,16 @@ public class Cannon : MonoBehaviour
             if (Physics.Raycast(transform.position, transform.up, out RaycastHit hit, shootDistance))
             {
                 if (hit.collider.TryGetComponent<Ship>(out var ship))
-                {
-                    timer = Random.Range(cooldownInterval.x, cooldownInterval.y); 
+                { 
+                    if (ship.teamRed =! parentShip.teamRed)
+                    {
+                        timer = Random.Range(cooldownInterval.x, cooldownInterval.y);
 
-                    // clamp delay to non-negative (WaitForSeconds doesn't accept negative)
-                    float delay = Random.Range(RandomDelayInterval.x, RandomDelayInterval.y);
+                        // clamp delay to non-negative (WaitForSeconds doesn't accept negative)
+                        float delay = Random.Range(RandomDelayInterval.x, RandomDelayInterval.y);
 
-                    StartCoroutine(DelayedShoot(delay));
+                        StartCoroutine(DelayedShoot(delay));
+                    }
                 }
             }
         }

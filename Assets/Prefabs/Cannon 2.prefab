@@ -103,6 +103,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: '::'
   CannonBallPrefab: {fileID: 8669331111841744554, guid: afd626e9bf7c93d46b9fcaf3b3de0788, type: 3}
-  cooldown: 10
+  cooldownInterval: {x: 5, y: 10}
   shootDistance: 10
   RandomDelayInterval: {x: 0.1, y: 0.5}
