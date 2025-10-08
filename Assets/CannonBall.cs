@@ -3,7 +3,7 @@ using UnityEngine;
 public class CannonBall : MonoBehaviour
 {
     [SerializeField] Vector3 direction = Vector3.right;
-    [SerializeField] float speed = 10f;
+    [SerializeField] public float Speed { get; private set; } = 10f;
     [SerializeField] float lifeTime = 10f;
 
     private Sea sea;
@@ -23,12 +23,13 @@ public class CannonBall : MonoBehaviour
 
         // Apply wind from Sea
         Vector3 windXZ = new Vector3(sea.WindDirection.x, 0f, sea.WindDirection.y);
-        transform.position += (direction * speed + windXZ) * Time.deltaTime;
+        transform.position += (direction * Speed + windXZ) * Time.deltaTime;
     }
 
     public void Init(Vector3 dir)
     {
         direction = dir.normalized;
+
     }
 
     public void OnTriggerEnter(Collider other)

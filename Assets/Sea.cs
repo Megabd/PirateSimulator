@@ -8,12 +8,14 @@ public class Sea : MonoBehaviour
     [SerializeField] Vector2 windPowerInterval = new Vector2(0.5f, 2f);
     [SerializeField] Vector2 windChangeInterval = new Vector2(5f, 15f);
     [SerializeField] float mapSizeToShips = 0.3f;
+    [SerializeField] float timeScale = 1.0f;
     public Vector2 WindDirection { get; private set; }
     private float timer = 0f;
     private float hx;
     private float hy;
     void Start()
     {
+        Time.timeScale = timeScale;
         // set local scale based on shipAmount
         var s = transform.localScale;
         s.x = mapSizeToShips * shipAmount;

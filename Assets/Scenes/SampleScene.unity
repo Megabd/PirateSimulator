@@ -493,6 +493,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6742673242300156091, guid: bc1cff564a606204e8fa1f0a3dfb7c8f, type: 3}
+      propertyPath: timeScale
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6742673242300156091, guid: bc1cff564a606204e8fa1f0a3dfb7c8f, type: 3}
       propertyPath: shipAmount
       value: 1000
       objectReference: {fileID: 0}

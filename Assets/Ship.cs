@@ -6,14 +6,15 @@ public class Ship : MonoBehaviour
     [Header("Stats")]
     [SerializeField] int health = 100;
     [SerializeField] float turnSpeed = 100f; // deg/sec
-    [SerializeField] float speed = 3f;       // units/sec
+    [SerializeField] public float Speed { get; private set; } = 2f;
     [SerializeField] float senseRadius = 10f;          // who counts as nearby
     [SerializeField] float sampleOffset = 5f;         // how far F/L/R samples are
 
     [Header("Wandering")]
     [SerializeField] Vector3 target;
 
-    [SerializeField] float targetChangeInterval = 3f;
+    [SerializeField] Vector2 targetChangeInterval = new Vector2(3f, 6f);
+    float targetChangeTimer;
     float timer;
     float fixedY; // lock Y here
     Sea sea;
@@ -27,6 +28,7 @@ public class Ship : MonoBehaviour
     void Start()
     {
         sea = FindFirstObjectByType<Sea>();
+        targetChangeTimer = Random.Range(targetChangeInterval.x, targetChangeInterval.y);
         fixedY = transform.position.y; // remember our water level
         target = sea.GetRandomPointInSea();
         var renderer = GetComponentInChildren<Renderer>();
@@ -43,9 +45,10 @@ public class Ship : MonoBehaviour
     {
         // periodically pick a new target
         timer += Time.deltaTime;
-        if (timer >= targetChangeInterval)
+        if (timer >= targetChangeTimer)
         {
             target = ChooseTargetPosition();
+            targetChangeTimer = Random.Range(targetChangeInterval.x, targetChangeInterval.y);
             timer = 0f;
         }
 
@@ -63,7 +66,7 @@ public class Ship : MonoBehaviour
         // move forward on XZ only
         Vector3 forwardXZ = new Vector3(transform.up.x, 0f, transform.up.z).normalized;
         Vector3 windXZ = new Vector3(sea.WindDirection.x, 0f, sea.WindDirection.y);
-        transform.position += (forwardXZ * speed + windXZ) * Time.deltaTime;    
+        transform.position += (forwardXZ * Speed + windXZ) * Time.deltaTime;    
 
         // hard-lock Y
         var p = transform.position;

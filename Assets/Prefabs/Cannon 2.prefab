@@ -106,3 +106,4 @@ MonoBehaviour:
   cooldownInterval: {x: 5, y: 10}
   shootDistance: 10
   RandomDelayInterval: {x: 0.1, y: 0.5}
+  turnSpeed: 10
