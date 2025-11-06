@@ -2,5 +2,5 @@ using Unity.Entities;
 
 public struct HealthComponent : IComponentData
 {
-    int health;
+    public int health;
 }

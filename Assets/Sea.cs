@@ -1,5 +1,9 @@
 using UnityEditor.UI;
 using UnityEngine;
+using Unity.Entities;
+using Unity.Transforms;
+using Unity.Mathematics;
+
 
 public class Sea : MonoBehaviour
 {
@@ -24,7 +28,7 @@ public class Sea : MonoBehaviour
 
         hx = transform.lossyScale.x * 0.4f;
         hy = transform.lossyScale.y * 0.4f;
-        for (int i = 0; i < shipAmount; i++)
+        /*for (int i = 0; i < shipAmount; i++)
         {
             Vector3 pos = GetRandomPointInSea();
             var obj = Instantiate(shipPrefab, pos, shipPrefab.transform.rotation);
@@ -32,7 +36,8 @@ public class Sea : MonoBehaviour
             {
                 ship.Init(i%2 == 0);
             }
-        }
+        }*/
+        spawnShipsEntities();
     }
 
     private void Update()
@@ -49,8 +54,8 @@ public class Sea : MonoBehaviour
 
     public Vector3 GetRandomPointInSea()
     {
-        float x = Random.Range(-hx, hx);
-        float z = Random.Range(-hy, hy);
+        float x = UnityEngine.Random.Range(-hx, hx);
+        float z = UnityEngine.Random.Range(-hy, hy);
         return new Vector3(transform.position.x + x, transform.position.y + 0.1f, transform.position.z + z);
     }
 
@@ -64,8 +69,8 @@ public class Sea : MonoBehaviour
 
     public void ChangeWindDirection()
     {
-        float angle = Random.Range(0f, 360f);
-        float power = Random.Range(windPowerInterval.x, windPowerInterval.y);
+        float angle = UnityEngine.Random.Range(0f, 360f);
+        float power = UnityEngine.Random.Range(windPowerInterval.x, windPowerInterval.y);
 
         // Convert angle and power to a directional vector
         float radians = angle * Mathf.Deg2Rad;
@@ -90,6 +95,29 @@ public class Sea : MonoBehaviour
         Vector3 left = Quaternion.Euler(0, -25, 0) * windDir.normalized;
         Gizmos.DrawLine(origin + windDir.normalized * arrowLength, origin + right * (arrowLength * 0.8f));
         Gizmos.DrawLine(origin + windDir.normalized * arrowLength, origin + left * (arrowLength * 0.8f));
+    }
+
+
+    void spawnShipsEntities()
+    {
+        EntityManager entityManager =  World.DefaultGameObjectInjectionWorld.EntityManager;
+        EntityArchetype archetype = entityManager.CreateArchetype(
+            typeof(LocalTransform),
+            typeof(SpeedComponent),
+            typeof(RotationComponent),
+            typeof(HealthComponent),
+            typeof(WindComponent)
+        );
+
+        for (int i=0; i<shipAmount; i++){
+            Entity entity = entityManager.CreateEntity(archetype);
+            entityManager.SetComponentData(entity, new LocalTransform{Position = new float3(0.0f, 0.0f, 0.0f), Scale = 1.0f, Rotation = quaternion.identity});
+            entityManager.SetComponentData(entity, new SpeedComponent{speed = 1.0f});
+            entityManager.SetComponentData(entity, new RotationComponent{turnSpeed = 60.0f, desiredPosition = new float3(0.0f, 0.0f, 0.0f)});
+            entityManager.SetComponentData(entity, new HealthComponent{health = 5});
+            entityManager.SetComponentData(entity, new WindComponent{windDirection = new float2(0.0f, 0.0f), power = 1.0f});
+        }
+        
     }
 
 }
