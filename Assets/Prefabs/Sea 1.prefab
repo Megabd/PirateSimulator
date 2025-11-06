@@ -125,4 +125,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: '::'
   shipPrefab: {fileID: 1076330098313587401, guid: 82521aeb9f37a3b4e91a941b47af34cc, type: 3}
-  shipAmount: 50
+  shipAmount: 10000
+  windPowerInterval: {x: 0.5, y: 2}
+  windChangeInterval: {x: 5, y: 15}
+  mapSizeToShips: 0.3
+  timeScale: 1
