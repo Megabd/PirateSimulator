@@ -19,6 +19,7 @@ public class Cannon : MonoBehaviour
     private float shootCooldownTimer = 0f;
     private Ship parentShip;
     Vector3 wind;
+    Ship targetShip;
 
     private void Start()
     {
@@ -27,29 +28,24 @@ public class Cannon : MonoBehaviour
         var windTemp = FindFirstObjectByType<Sea>().WindDirection;
         wind = new Vector3(windTemp.x, 0f, windTemp.y);
         CannonBallSpeed = CannonBallPrefab.GetComponent<CannonBall>().Speed;
+        targetShip = null;
     }
     void Update()
     {
         shootCooldownTimer -= Time.deltaTime;
 
-        bool hasTarget = false;
-        Ship targetShip = null;
-
+           
 
         // Look for a target every frame to keep tracking while waiting to fire
         if (Physics.Raycast(transform.position, transform.up, out RaycastHit hit, shootDistance))
         {
             if (hit.collider.TryGetComponent<Ship>(out var ship) && ship.teamRed != parentShip.teamRed)
             {
-                hasTarget = true;
-                targetShip = ship;
-
-                // Aim continuously while target is visible
-                AimSimplePrediction(ship.transform, ship.transform.up * ship.Speed + wind);
 
                 // Fire only if cooldown is ready
                 if (shootCooldownTimer <= 0f)
                 {
+                    targetShip = ship;
                     shootCooldownTimer = Random.Range(cooldownInterval.x, cooldownInterval.y);
                     float delay = Mathf.Max(0f, Random.Range(RandomDelayInterval.x, RandomDelayInterval.y));
                     StartCoroutine(DelayedShoot(delay));
@@ -58,9 +54,13 @@ public class Cannon : MonoBehaviour
         }
 
         // Only return to start if no target this frame
-        if (!hasTarget)
+        if (targetShip == null)
         {
             ReturnToStart();
+        }
+        else {
+            // Aim continuously while target 
+            AimSimplePrediction(targetShip.transform, targetShip.transform.up * targetShip.Speed + wind);
         }
     }
 
@@ -73,6 +73,7 @@ public class Cannon : MonoBehaviour
         {
             ball.Init(transform.up);
         }
+        targetShip = null; // reset target after shooting
     }
 
     // (Optional) visualize ray in Scene view
@@ -84,33 +85,47 @@ public class Cannon : MonoBehaviour
 
     void AimSimplePrediction(Transform target, Vector3 targetVelocity)
     {
-
+        // where target will be
         Vector3 toTarget = target.position - transform.position;
         float dist = toTarget.magnitude;
 
-        float TimeToIntercept = dist / CannonBallSpeed; // How long for the cannonball to hit the ship, does not account for any movement or wind
+        float timeToIntercept = dist / CannonBallSpeed;
+        Vector3 predicted = target.position + targetVelocity * timeToIntercept;
 
-        Vector3 predicted = target.position + targetVelocity * TimeToIntercept;
-        Vector3 desiredDir = (predicted - transform.position).normalized;
+        // direction we want to point the BARREL at
+        Vector3 desiredDir = predicted - transform.position;
 
-        Quaternion targetWorldRot = Quaternion.LookRotation(desiredDir, parentShip.transform.up);
+        // stay on XZ so it doesn't pitch up/down
+        desiredDir = Vector3.ProjectOnPlane(desiredDir, Vector3.up).normalized;
+        if (desiredDir.sqrMagnitude < 0.0001f)
+            return;
+
+        // CURRENT world direction of the barrel (because your barrel = transform.up)
+        Vector3 currentBarrelDir = transform.up;
+
+        // make a rotation that turns "what I'm currently pointing" into "what I want to point"
+        Quaternion alignRot = Quaternion.FromToRotation(currentBarrelDir, desiredDir);
+
+        // apply it on top of the current world rotation to get the target world rotation
+        Quaternion targetWorldRot = alignRot * transform.rotation;
+
+        // turn that into local space under the ship
         Quaternion targetLocalRot = Quaternion.Inverse(parentShip.transform.rotation) * targetWorldRot;
 
-
+        // keep your clamping
         float angleFromStart = Quaternion.Angle(startLocalRotation, targetLocalRot);
         Quaternion goalLocalRot =
-        angleFromStart <= 60f
-        ? targetLocalRot
-        : Quaternion.RotateTowards(startLocalRotation, targetLocalRot, 60f);
+            angleFromStart <= 60f
+            ? targetLocalRot
+            : Quaternion.RotateTowards(startLocalRotation, targetLocalRot, 60f);
 
-        // 4) Rotate cannon in LOCAL space
         transform.localRotation = Quaternion.RotateTowards(
             transform.localRotation,
             goalLocalRot,
             turnSpeed * Time.deltaTime
         );
-
     }
+
 
     public void ReturnToStart()
     {
