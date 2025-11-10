@@ -14,7 +14,7 @@ partial struct HealthSystem : ISystem
     {
         foreach (var HealthComponent in SystemAPI.Query<RefRW<HealthComponent>>())
         {
-
+            
         }
     }
 
