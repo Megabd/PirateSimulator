@@ -19,4 +19,5 @@ public class CannonBallAuthoring : MonoBehaviour
 public struct CannonBalls : IComponentData
 {
     public float3 Velocity;
+    public float Lifetime;
 }
