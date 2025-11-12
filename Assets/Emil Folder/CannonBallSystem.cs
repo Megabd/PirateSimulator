@@ -19,7 +19,7 @@ public partial struct CannonBallSystem : ISystem
         {
             ECB = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged),
             DeltaTime = SystemAPI.Time.DeltaTime
-        }.Schedule();
+        }.Schedule(); //multithreat here pls for improved performance
     }
 }
 [BurstCompile]
