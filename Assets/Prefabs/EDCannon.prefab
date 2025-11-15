@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 4266786373182007494}
   - component: {fileID: 9086364753592030906}
   - component: {fileID: 6030002139018148305}
+  - component: {fileID: 724350302485804827}
   m_Layer: 0
   m_Name: EDCannon
   m_TagString: Untagged
@@ -97,7 +98,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 870583445274205457}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bff64d156e1b19641aae6e31051fa9a1, type: 3}
   m_Name: 
@@ -107,3 +108,15 @@ MonoBehaviour:
   shootDistance: 10
   RandomDelayInterval: {x: 0.1, y: 0.5}
   turnSpeed: 1000
+--- !u!114 &724350302485804827
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 870583445274205457}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d8e7e06654bed9d43b1c6a5b7a68571d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CannonAuthoring

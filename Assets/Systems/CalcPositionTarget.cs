@@ -5,6 +5,7 @@ using Unity.Mathematics;
 using UnityEngine.SocialPlatforms.Impl;
 using NUnit.Framework.Internal;
 using TMPro;
+using UnityEngine;
 
 partial struct CalcPositionTarget : ISystem
 {
@@ -59,7 +60,7 @@ partial struct CalcPositionTarget : ISystem
 
             rotation.ValueRW.desiredPosition = chosen;
 
-            Random rand = new Random(timer.ValueRW.Seed);
+            Unity.Mathematics.Random rand = new Unity.Mathematics.Random(timer.ValueRW.Seed);
             timer.ValueRW.TimeLeft = rand.NextFloat(timer.ValueRW.MinSecs, timer.ValueRW.MaxSecs);
             timer.ValueRW.Seed = rand.NextUInt();
         }
