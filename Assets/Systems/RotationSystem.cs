@@ -36,6 +36,7 @@ partial struct RotationSystem : ISystem
             {
                 float3 dir = toTarget * math.rsqrt(lenSq); // normalized
                 goalRot = quaternion.LookRotationSafe(dir, up);
+                //Debug.Log("happens?");
             }
             else
             {

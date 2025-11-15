@@ -37,11 +37,11 @@ public class ShipAuthoring : MonoBehaviour
                 Sail = GetEntity(authoring.Sail, TransformUsageFlags.Dynamic)
             });
             AddComponent(entity, new SpeedComponent { speed = 3.0f });
-            AddComponent(entity, new RotationComponent { turnSpeed = 60.0f, desiredPosition = new float3(0.0f, 0.0f, 0.0f) });
+            AddComponent(entity, new RotationComponent { turnSpeed = 60.0f, desiredPosition = new float3(0.0f, 0.0f, 0.0f), maxTurnAngle = 360.0f});
             AddComponent(entity, new HealthComponent { health = 5 });
-            AddComponent(entity, new WindComponent { windDirection = new float2(1.0f, 1.0f), power = 1.0f });
+            AddComponent(entity, new WindComponent { windDirection = new float2(0.0f, 0.0f), power = 0.0f });
             AddComponent(entity, new TeamComponent { redTeam = true });
-            AddComponent(entity, new ShipSenseComponent { sampleOffset = 10.0f, sampleRadius = 20.0f});
+            AddComponent(entity, new ShipSenseComponent { sampleOffset = 50.0f, sampleRadius = 100.0f});
             AddComponent(entity, new CooldownTimer { TimeLeft = 1.0f, MinSecs = 5.0f, MaxSecs = 15.0f, Seed = 1 });
 
         }

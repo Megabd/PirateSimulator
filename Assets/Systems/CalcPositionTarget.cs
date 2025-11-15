@@ -40,7 +40,7 @@ partial struct CalcPositionTarget : ISystem
             bool4 hasEnemy = false;
             float r = sense.ValueRO.sampleRadius;
             float r2 = r * r;
-            // Replace with physics hit
+            // Replace with physics hit //This also sees cannons currently, might wanna fix this?
             foreach (var (otherTransform, otherTeamComponent) in SystemAPI.Query<RefRO<LocalTransform>, RefRO<TeamComponent>>())
             {
                 float3 p = otherTransform.ValueRO.Position;
@@ -53,12 +53,17 @@ partial struct CalcPositionTarget : ISystem
             float3 chosen = s0;
             int best = -1;
 
+            //Debug.Log("Allies: "+ allyCounts);
+            //Debug.Log("Enemies: " + hasEnemy);
+
             if (hasEnemy.x && allyCounts.x > best) { chosen = s0; best = allyCounts.x; }
             else if (hasEnemy.y && allyCounts.y > best) {chosen = s1; best = allyCounts.y; }
             else if (hasEnemy.z && allyCounts.z > best) {chosen = s2; best = allyCounts.z; }
             else if (hasEnemy.w && allyCounts.w > best) {chosen = s3; best = allyCounts.w; }
 
             rotation.ValueRW.desiredPosition = chosen;
+
+            //Debug.Log(chosen);
 
             Unity.Mathematics.Random rand = new Unity.Mathematics.Random(timer.ValueRW.Seed);
             timer.ValueRW.TimeLeft = rand.NextFloat(timer.ValueRW.MinSecs, timer.ValueRW.MaxSecs);

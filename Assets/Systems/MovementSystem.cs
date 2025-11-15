@@ -27,8 +27,12 @@ partial struct MovementSystem : ISystem
             transform.ValueRW.Rotation = math.mul(yaw, tilt);
             float3 upVector = transform.ValueRO.Up();
 
+            //Debug.Log("x: " + upVector.x);
+            //Debug.Log("z: " + upVector.z);
+
             transform.ValueRW.Position.x += (upVector.x * SpeedComponent.ValueRO.speed + WindComponent.ValueRO.windDirection.x) * dt; 
-            transform.ValueRW.Position.z += (upVector.z * SpeedComponent.ValueRO.speed + WindComponent.ValueRO.windDirection.y) * dt;   
+            transform.ValueRW.Position.z += (upVector.z * SpeedComponent.ValueRO.speed + WindComponent.ValueRO.windDirection.y) * dt;  
+            //Debug.Log("helo?");
         }
     }
 
