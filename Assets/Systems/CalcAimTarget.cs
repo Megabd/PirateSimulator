@@ -6,6 +6,7 @@ using UnityEngine.SocialPlatforms.Impl;
 using NUnit.Framework.Internal;
 using TMPro;
 using static UnityEngine.UI.Image;
+using UnityEngine;
 
 partial struct CalcAimTarget : ISystem
 {
@@ -20,10 +21,11 @@ partial struct CalcAimTarget : ISystem
     {
         foreach (var (transform, rotation, team, sense) in SystemAPI.Query<RefRO<LocalTransform>, RefRW<RotationComponent>, RefRO<TeamComponent>, RefRO<CanonSenseComponent>>())
         {
-
+              
             float3 pos = transform.ValueRO.Position;
             if (math.all(rotation.ValueRO.desiredPosition == pos) || math.all(rotation.ValueRO.desiredPosition == float3.zero))
             {
+                //Debug.Log("Here");
                 continue; // No target currently  
             }
             float senseDistSq = sense.ValueRO.senseDistance * sense.ValueRO.senseDistance;
@@ -66,6 +68,7 @@ partial struct CalcAimTarget : ISystem
             }
             // Rotate to best target found (or back to 0 if none)  
             rotation.ValueRW.desiredPosition = bestTarget;
+          //Debug.Log("End");
         }
     }
 

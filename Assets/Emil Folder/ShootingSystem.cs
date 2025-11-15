@@ -2,6 +2,7 @@
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
+using UnityEngine;
 
 // Shoot before transform systems so new balls don't flash at origin for a frame
 [UpdateBefore(typeof(TransformSystemGroup))]
@@ -21,12 +22,23 @@ public partial struct ShootingSystem : ISystem
 
         var ballXform = em.GetComponentData<LocalTransform>(config.CannonBallPrefab);
 
+        float dt = SystemAPI.Time.DeltaTime;
+
         foreach (var (shipTag, cannons) in
                  SystemAPI.Query<RefRO<ShipAuthoring.Ship>, DynamicBuffer<ShipAuthoring.CannonElement>>())
         {
             for (int i = 0; i < cannons.Length; i++)
             {
+                /*
                 var cannonEntity = cannons[i].Cannon;
+                //em.GetComponentData<CooldownTimer>(cannonEntity).TimeLeft -= dt;
+                //Debug.Log(em.GetComponentData<CooldownTimer>(cannonEntity).TimeLeft);
+                if (em.GetComponentData<CooldownTimer>(cannonEntity).TimeLeft > 0f){
+                    //Debug.Log("Hello?");
+                    continue; // not ready to shoot yet
+                }
+                //Debug.Log("also here");
+                //Debug.Log(em.GetComponentData<TeamComponent>(cannonEntity).redTeam);
                 var cannonLTW = em.GetComponentData<LocalToWorld>(cannonEntity);
 
                 var ball = em.Instantiate(config.CannonBallPrefab);
@@ -37,14 +49,16 @@ public partial struct ShootingSystem : ISystem
 
                 // baldur shit ass asset, i fucking hate u, i will find and molest you, god damnit
                 var dir = cannonLTW.Up;
+                
 
 
                 em.SetComponentData(ball, new CannonBalls
                 {
                     Velocity = math.normalize(dir) * 10f,
                     Lifetime = 0f
-                });
+                });*/
             }
+            
         }
     }
 }
