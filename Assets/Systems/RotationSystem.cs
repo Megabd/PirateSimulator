@@ -15,16 +15,15 @@ partial struct RotationSystem : ISystem
         float3 up = math.up();
         float deltaTime = SystemAPI.Time.DeltaTime;
 
-        foreach (var (transform, rotation)
-                 in SystemAPI.Query<RefRW<LocalTransform>, RefRO<RotationComponent>>())
-        {
+        foreach (var (transform, rotation, worldPos)
+                 in SystemAPI.Query<RefRW<LocalTransform>, RefRO<RotationComponent>, RefRO<LocalToWorld>>())
+        {   
             var lt = transform.ValueRO;
-
             quaternion startRot = rotation.ValueRO.startRotation;
             float maxAngle = rotation.ValueRO.maxTurnAngle;   // max degrees from startRot
             float turnSpeed = rotation.ValueRO.turnSpeed;     // max degrees per second
 
-            float3 toTarget = rotation.ValueRO.desiredPosition - lt.Position;
+            float3 toTarget = rotation.ValueRO.desiredPosition - worldPos.ValueRO.Position;
             float lenSq = math.lengthsq(toTarget);
             // No target if desiredPosition == current position
             bool hasTarget = lenSq > 1e-6f;
@@ -34,8 +33,20 @@ partial struct RotationSystem : ISystem
 
             if (hasTarget)
             {
+                
                 float3 dir = toTarget * math.rsqrt(lenSq); // normalized
-                goalRot = quaternion.LookRotationSafe(dir, up);
+
+                float2 flat = new float2(toTarget.x, toTarget.z);
+                float targetYaw = math.atan2(flat.x, flat.y);
+                quaternion yaw = quaternion.RotateY(targetYaw);
+                goalRot = yaw;
+
+                /*
+                float2 flat = new float2(toTarget.x, toTarget.z);
+                float targetYaw = math.atan2(flat.x, flat.y);
+                quaternion yaw = quaternion.RotateY(targetYaw);
+                quaternion tilt = quaternion.Euler(math.radians(90f), 0f, 0f);
+                goalRot = math.mul(yaw, tilt);*/
                 //Debug.Log("happens?");
             }
             else
@@ -53,7 +64,7 @@ partial struct RotationSystem : ISystem
                 deltaTime: deltaTime
             );
 
-            transform.ValueRW = lt;
+            transform.ValueRW.Rotation = goalRot;
         }
     }
 

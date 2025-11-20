@@ -45,11 +45,13 @@ public partial struct ShipSpawnSystem : ISystem
                 new float2(halfWidth, halfHeight));
 
             var pos = new float3(xz.x, 0f, xz.y);
-
+            var tilt = quaternion.Euler(math.radians(90f), 0f, 0f);
+            var yaw = quaternion.RotateY(0);
+            quaternion fix = math.mul(yaw, tilt);
             em.SetComponentData(entities[i],
                 LocalTransform.FromPositionRotationScale(pos, quaternion.identity, 1f));
             em.SetComponentData(entities[i],
-                new RotationComponent {turnSpeed = 60.0f, desiredPosition = new float3(0.0f, 0.0f, 0.0f), maxTurnAngle = 360.0f, startRotation = quaternion.identity});
+                new RotationComponent {turnSpeed = 60.0f, desiredPosition = new float3(1.0f, 0.0f, 1.0f), maxTurnAngle = 360.0f, startRotation = quaternion.identity});
             em.SetComponentData(entities[i], new TeamComponent { redTeam = team });
             em.SetComponentData(entities[i],
                 new CooldownTimer { TimeLeft = 1.0f, MinSecs = 5.0f, MaxSecs = 15.0f, Seed = seed });
@@ -58,20 +60,23 @@ public partial struct ShipSpawnSystem : ISystem
             // Apply team component to each cannon entity
             foreach (var ele in cannonBuffer) 
             {
+                quaternion lol;
                 quaternion test;
                 if (j < 3)
                 {
-                    test = quaternion.Euler(0, math.radians(180f), math.radians(90f));
+                    test = quaternion.Euler(0, 0, math.radians(-90f));
+                    lol = math.mul(fix, test);
                 }
                 else
                 {
-                    test = quaternion.Euler(0, 0f, math.radians(90f));
+                    test = quaternion.Euler(0, 0f, math.radians(-90f));
+                    lol = math.mul(fix, test);
                 }
                 
                 //var entity = GetEntity(ele, TransformUsageFlags.Dynamic);
                 //em.SetComponentData(ele.Cannon, new TeamComponent { redTeam = team });
                 em.SetComponentData(ele.Cannon, new TeamComponent { redTeam = team });
-                em.SetComponentData(ele.Cannon, new RotationComponent {turnSpeed = 60.0f, desiredPosition = new float3(0.0f, 0.0f, 0.0f), maxTurnAngle = 90.0f, startRotation = test});
+                em.SetComponentData(ele.Cannon, new RotationComponent {turnSpeed = 60.0f, desiredPosition = new float3(1.0f, 0.0f, 1.0f), maxTurnAngle = 60.0f, startRotation = test});
                 //AddComponent(entity, new TeamComponent { redTeam = true });
                 j++;
             }

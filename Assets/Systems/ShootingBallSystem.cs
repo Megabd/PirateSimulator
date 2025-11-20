@@ -17,7 +17,7 @@ partial struct ShootingBallSystem : ISystem
 
         var ballXform = em.GetComponentData<LocalTransform>(config.CannonBallPrefab);
         float dt = SystemAPI.Time.DeltaTime;
-        foreach (var (transform, rotation, coolDownTimer) in SystemAPI.Query<RefRO<LocalTransform>, RefRW<RotationComponent>, RefRW<CooldownTimer>>())
+        foreach (var (transform, rotation, coolDownTimer, CanonSense) in SystemAPI.Query<RefRO<LocalTransform>, RefRW<RotationComponent>, RefRW<CooldownTimer>, RefRO<CanonSenseComponent>>())
         {
             coolDownTimer.ValueRW.TimeLeft -= dt;
             //Debug.Log(coolDownTimer.ValueRW.TimeLeft);
