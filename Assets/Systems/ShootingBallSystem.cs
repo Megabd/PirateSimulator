@@ -17,47 +17,57 @@ partial struct ShootingBallSystem : ISystem
 
         var ballXform = em.GetComponentData<LocalTransform>(config.CannonBallPrefab);
         float dt = SystemAPI.Time.DeltaTime;
-        foreach (var (transform, rotation, coolDownTimer, CanonSense, WorldPos) in SystemAPI.Query<RefRO<LocalTransform>, RefRW<RotationComponent>, RefRW<CooldownTimer>, RefRO<CanonSenseComponent>, RefRO<LocalToWorld>>())
+        foreach (var (transform,
+             rotation,
+             coolDownTimer,
+             canonSense,
+             worldPos,
+             prevPos)
+         in SystemAPI.Query<
+                RefRO<LocalTransform>,
+                RefRW<RotationComponent>,
+                RefRW<CooldownTimer>,
+                RefRO<CanonSenseComponent>,
+                RefRO<LocalToWorld>,
+                RefRW<PrevPosComponent>>())
         {
+
+
+            float3 currentPos = worldPos.ValueRO.Position;
+            float3 cannonVel = (currentPos - prevPos.ValueRO.PrePos) / dt; // world-space velocity
+            prevPos.ValueRW.PrePos = currentPos; // store for next frame
+
             coolDownTimer.ValueRW.TimeLeft -= dt;
-            //Debug.Log(coolDownTimer.ValueRW.TimeLeft);
-            if (coolDownTimer.ValueRW.TimeLeft > 0f)
-                continue; // not ready to shoot yet
+            if (coolDownTimer.ValueRW.TimeLeft > 0f) continue;
+            if (rotation.ValueRO.desiredPosition.x == 0 && rotation.ValueRO.desiredPosition.y == 0 && rotation.ValueRO.desiredPosition.z == 0) continue;
 
-            float3 origin = WorldPos.ValueRO.Position;
-            float3 dir = transform.ValueRO.Forward();          // your "barrel" direction
-
-            //float speed = cannonBall.ValueRO.projectileSpeed;
-
-            //var cannonLTW = em.GetComponentData<LocalToWorld>(cannonEntity);
+            float3 origin = currentPos;
+            float3 dir = math.normalize(worldPos.ValueRO.Forward);
 
             var ball = em.Instantiate(config.CannonBallPrefab);
 
-                // spawn at cannon position
+            // spawn at cannon position
             ballXform.Position = origin;
+            ballXform.Rotation = transform.ValueRO.Rotation; // local rotation of cannon entity
             em.SetComponentData(ball, ballXform);
 
-                // baldur shit ass asset, i fucking hate u, i will find and molest you, god damnit
-                //var dir = cannonLTW.Up;
-                
 
+            // ball inherits cannon velocity + its own shooting speed
+            em.SetComponentData(ball, new CannonBalls
+            {
+                Velocity = cannonVel + dir * 10f,
+                Lifetime = 0f
+            });
 
-                em.SetComponentData(ball, new CannonBalls
-                {
-                    Velocity = math.normalize(dir) * 10f,
-                    Lifetime = 0f
-                });
-
-            // Reset rotation target after shooting
-            //rotation.ValueRW.desiredPosition = float3.zero;
+            rotation.ValueRW.desiredPosition = float3.zero;
 
             // Reset cooldown with randomness
             var rand = new Unity.Mathematics.Random(coolDownTimer.ValueRW.Seed);
-            coolDownTimer.ValueRW.TimeLeft = rand.NextFloat(coolDownTimer.ValueRW.MinSecs, coolDownTimer.ValueRW.MaxSecs);
+            coolDownTimer.ValueRW.TimeLeft =
+                rand.NextFloat(coolDownTimer.ValueRW.MinSecs, coolDownTimer.ValueRW.MaxSecs);
             coolDownTimer.ValueRW.Seed = rand.NextUInt();
-            //Debug.Log("Testing");
-
         }
+
 
     }
 

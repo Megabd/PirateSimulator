@@ -1,4 +1,4 @@
-using Unity.Burst;
+﻿using Unity.Burst;
 using Unity.Entities;
 using Unity.Transforms;
 using Unity.Mathematics;
@@ -21,17 +21,22 @@ partial struct CalcAimTarget : ISystem
     {
         foreach (var (transform, rotation, team, sense, toWorld) in SystemAPI.Query<RefRO<LocalTransform>, RefRW<RotationComponent>, RefRO<TeamComponent>, RefRO<CanonSenseComponent>, RefRO<LocalToWorld>>())
         {
-            
+            if (!rotation.ValueRO.desiredPosition.Equals(float3.zero))
+            {
+                continue;
+            }
+
             float3 pos = toWorld.ValueRO.Position;
-            //Debug.Log("Canon pos: " + pos);
             float senseDistSq = sense.ValueRO.senseDistance * sense.ValueRO.senseDistance;
             float projSpeed = sense.ValueRO.cannonballSpeed;
             float3 bestTarget = float3.zero;
             float bestDistSq = float.MaxValue;
             float3 forward = transform.ValueRO.Forward();
 
-            foreach (var (otherTransform, speed, otherTeam, shipSense) in SystemAPI.Query<RefRO<LocalTransform>, RefRO<SpeedComponent>, RefRO<TeamComponent>, RefRO<ShipSenseComponent>>())
+
+            foreach (var (otherTransform, speed, otherTeam, shipSense, othertoWorld) in SystemAPI.Query<RefRO<LocalTransform>, RefRO<SpeedComponent>, RefRO<TeamComponent>, RefRO<ShipSenseComponent>, RefRO<LocalToWorld>> ())
             {
+
                 bool isEnemy = otherTeam.ValueRO.redTeam != team.ValueRO.redTeam;
                 float3 otherPos = otherTransform.ValueRO.Position;
 
@@ -63,7 +68,7 @@ partial struct CalcAimTarget : ISystem
                 }
             }
             // Rotate to best target found (or back to 0 if none)  
-            //rotation.ValueRW.desiredPosition = bestTarget;
+            rotation.ValueRW.desiredPosition = bestTarget;
           //Debug.Log("End");
           
         }

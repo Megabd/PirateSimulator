@@ -56,6 +56,12 @@ public struct CannonComponent : IComponentData
     public float lifeTime;
 }
 
+public struct PrevPosComponent : IComponentData
+{
+    public float3 PrePos;
+}
+
+
 
 
 

@@ -72,11 +72,12 @@ public partial struct ShipSpawnSystem : ISystem
                     test = quaternion.Euler(0, 0f, math.radians(-90f));
                     lol = math.mul(fix, test);
                 }
-                
+                //var cannonLocal = em.GetComponentData<LocalTransform>(ele.Cannon);
+
                 //var entity = GetEntity(ele, TransformUsageFlags.Dynamic);
                 //em.SetComponentData(ele.Cannon, new TeamComponent { redTeam = team });
                 em.SetComponentData(ele.Cannon, new TeamComponent { redTeam = team });
-                em.SetComponentData(ele.Cannon, new RotationComponent {turnSpeed = 60.0f, desiredPosition = float3.zero, maxTurnAngle = 60.0f, startRotation = test});
+                //em.SetComponentData(ele.Cannon, new RotationComponent {turnSpeed = 60.0f, desiredPosition = float3.zero, maxTurnAngle = 60.0f, startRotation = cannonLocal.Rotation});
                 //AddComponent(entity, new TeamComponent { redTeam = true });
                 j++;
             }

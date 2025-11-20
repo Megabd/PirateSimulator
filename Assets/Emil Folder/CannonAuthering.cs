@@ -1,19 +1,30 @@
 using Unity.Entities;
-using UnityEngine;
 using Unity.Mathematics;
-using Unity.Transforms;
+using UnityEngine;
 
 public class CannonAuthoring : MonoBehaviour
 {
     class Baker : Baker<CannonAuthoring>
     {
-        public override void Bake(CannonAuthoring authoring) {
-        var entity = GetEntity(authoring, TransformUsageFlags.Dynamic);
-        AddComponent(entity, new RotationComponent { turnSpeed = 60.0f, desiredPosition = new float3(1.0f, 0.0f, 1.0f), maxTurnAngle = 60.0f});
-        AddComponent(entity, new TeamComponent { redTeam = true });
-        AddComponent(entity, new CooldownTimer { TimeLeft = 1.0f, MinSecs = 1.0f, MaxSecs = 3.0f, Seed = 1 });
-        AddComponent(entity, new CanonSenseComponent { senseDistance = 10.0f, cannonballSpeed = 3.0f });
-        //Debug.Log("here?");
-    }
+        public override void Bake(CannonAuthoring authoring)
+        {
+            var entity = GetEntity(authoring, TransformUsageFlags.Dynamic);
+
+            // TAKE THE PREFAB'S INITIAL ROTATION AS START ROTATION
+            quaternion startRot = authoring.transform.rotation;
+
+            AddComponent(entity, new RotationComponent
+            {
+                startRotation = startRot,
+                turnSpeed = 60.0f,
+                desiredPosition = float3.zero,
+                maxTurnAngle = 60.0f
+            });
+
+            AddComponent(entity, new TeamComponent { redTeam = true });
+            AddComponent(entity, new CooldownTimer { TimeLeft = 1.0f, MinSecs = 1.0f, MaxSecs = 3.0f, Seed = 1 });
+            AddComponent(entity, new CanonSenseComponent { senseDistance = 10.0f, cannonballSpeed = 3.0f });
+            AddComponent(entity, new PrevPosComponent { PrePos = float3.zero });
+        }
     }
 }

@@ -17,7 +17,7 @@ partial struct RotationSystem : ISystem
 
         foreach (var (transform, rotation, worldPos)
                  in SystemAPI.Query<RefRW<LocalTransform>, RefRO<RotationComponent>, RefRO<LocalToWorld>>())
-        {   
+        {
             var lt = transform.ValueRO;
             quaternion startRot = rotation.ValueRO.startRotation;
             float maxAngle = rotation.ValueRO.maxTurnAngle;   // max degrees from startRot
@@ -31,34 +31,19 @@ partial struct RotationSystem : ISystem
             // Rotation to desired position with no limits
             quaternion goalRot;
 
-            if(rotation.ValueRO.desiredPosition.x == 0 && rotation.ValueRO.desiredPosition.y == 0 && rotation.ValueRO.desiredPosition.z == 0)
+            if ((rotation.ValueRO.desiredPosition.x == 0 && rotation.ValueRO.desiredPosition.y == 0 && rotation.ValueRO.desiredPosition.z == 0))
             {
                 hasTarget = false;
             }
 
             if (hasTarget)
             {
-                
-
-                
                 float3 dir = toTarget * math.rsqrt(lenSq); // normalized
                 float2 flat = new float2(toTarget.x, toTarget.z);
                 float targetYaw = math.atan2(flat.x, flat.y);
                 quaternion yaw = quaternion.RotateY(targetYaw);
                 goalRot = yaw;
 
-                /*
-                float3 dir = toTarget * math.rsqrt(lenSq); // normalized
-                goalRot = quaternion.LookRotationSafe(dir, up);
-                */
-
-                /*
-                float2 flat = new float2(toTarget.x, toTarget.z);
-                float targetYaw = math.atan2(flat.x, flat.y);
-                quaternion yaw = quaternion.RotateY(targetYaw);
-                quaternion tilt = quaternion.Euler(math.radians(90f), 0f, 0f);
-                goalRot = math.mul(yaw, tilt);*/
-                //Debug.Log("happens?");
             }
             else
             {
@@ -89,6 +74,7 @@ partial struct RotationSystem : ISystem
         float turnSpeed,
         float deltaTime)
     {
+
         // 1) Clamp to maxAngle cone from startRot (if maxAngle > 0)
         float fromStart = AngleBetween(startRot, targetRot);
         if (maxAngle > 0f && fromStart > maxAngle)
@@ -96,7 +82,6 @@ partial struct RotationSystem : ISystem
             float tCone = maxAngle / fromStart;   // 0..1
             targetRot = math.slerp(startRot, targetRot, tCone);
         }
-
         // 2) Clamp turn speed (deg/sec)
         float angleToGoal = AngleBetween(currentRot, targetRot);
         float maxStep = turnSpeed * deltaTime;    // degrees this frame
