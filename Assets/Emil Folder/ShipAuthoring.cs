@@ -8,6 +8,8 @@ public class ShipAuthoring : MonoBehaviour
     public GameObject[] Cannons;
     public GameObject Mast;
     public GameObject Sail;
+    public GameObject EDBoat;
+
 
     class Baker : Baker<ShipAuthoring>
     {
@@ -34,7 +36,8 @@ public class ShipAuthoring : MonoBehaviour
             AddComponent(entity, new Ship
             {
                 Mast = GetEntity(authoring.Mast, TransformUsageFlags.Dynamic),
-                Sail = GetEntity(authoring.Sail, TransformUsageFlags.Dynamic)
+                Sail = GetEntity(authoring.Sail, TransformUsageFlags.Dynamic),
+                EDBoat = GetEntity(authoring.EDBoat, TransformUsageFlags.Dynamic)
             });
             AddComponent(entity, new SpeedComponent { speed = 3.0f });
             AddComponent(entity, new RotationComponent { turnSpeed = 60.0f, desiredPosition = new float3(1.0f, 0.0f, 1.0f), maxTurnAngle = 360.0f});
@@ -59,5 +62,6 @@ public class ShipAuthoring : MonoBehaviour
     {
         public Entity Mast;
         public Entity Sail;
+        public Entity EDBoat;
     }
 }
