@@ -76,7 +76,7 @@ public partial struct ShipSpawnSystem : ISystem
                 //var entity = GetEntity(ele, TransformUsageFlags.Dynamic);
                 //em.SetComponentData(ele.Cannon, new TeamComponent { redTeam = team });
                 em.SetComponentData(ele.Cannon, new TeamComponent { redTeam = team });
-                em.SetComponentData(ele.Cannon, new RotationComponent {turnSpeed = 60.0f, desiredPosition = new float3(1.0f, 0.0f, 1.0f), maxTurnAngle = 60.0f, startRotation = test});
+                em.SetComponentData(ele.Cannon, new RotationComponent {turnSpeed = 60.0f, desiredPosition = float3.zero, maxTurnAngle = 60.0f, startRotation = test});
                 //AddComponent(entity, new TeamComponent { redTeam = true });
                 j++;
             }

@@ -31,15 +31,26 @@ partial struct RotationSystem : ISystem
             // Rotation to desired position with no limits
             quaternion goalRot;
 
+            if(rotation.ValueRO.desiredPosition.x == 0 && rotation.ValueRO.desiredPosition.y == 0 && rotation.ValueRO.desiredPosition.z == 0)
+            {
+                hasTarget = false;
+            }
+
             if (hasTarget)
             {
                 
-                float3 dir = toTarget * math.rsqrt(lenSq); // normalized
 
+                
+                float3 dir = toTarget * math.rsqrt(lenSq); // normalized
                 float2 flat = new float2(toTarget.x, toTarget.z);
                 float targetYaw = math.atan2(flat.x, flat.y);
                 quaternion yaw = quaternion.RotateY(targetYaw);
                 goalRot = yaw;
+
+                /*
+                float3 dir = toTarget * math.rsqrt(lenSq); // normalized
+                goalRot = quaternion.LookRotationSafe(dir, up);
+                */
 
                 /*
                 float2 flat = new float2(toTarget.x, toTarget.z);
@@ -52,6 +63,7 @@ partial struct RotationSystem : ISystem
             else
             {
                 // No target -> rotate back toward starting rotation
+                //Debug.Log("yes");
                 goalRot = startRot;
             }
 
@@ -64,7 +76,7 @@ partial struct RotationSystem : ISystem
                 deltaTime: deltaTime
             );
 
-            transform.ValueRW.Rotation = goalRot;
+            transform.ValueRW.Rotation = lt.Rotation;
         }
     }
 

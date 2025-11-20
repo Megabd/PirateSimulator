@@ -63,7 +63,7 @@ partial struct CalcAimTarget : ISystem
                 }
             }
             // Rotate to best target found (or back to 0 if none)  
-            rotation.ValueRW.desiredPosition = bestTarget;
+            //rotation.ValueRW.desiredPosition = bestTarget;
           //Debug.Log("End");
           
         }

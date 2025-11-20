@@ -17,15 +17,15 @@ partial struct ShootingBallSystem : ISystem
 
         var ballXform = em.GetComponentData<LocalTransform>(config.CannonBallPrefab);
         float dt = SystemAPI.Time.DeltaTime;
-        foreach (var (transform, rotation, coolDownTimer, CanonSense) in SystemAPI.Query<RefRO<LocalTransform>, RefRW<RotationComponent>, RefRW<CooldownTimer>, RefRO<CanonSenseComponent>>())
+        foreach (var (transform, rotation, coolDownTimer, CanonSense, WorldPos) in SystemAPI.Query<RefRO<LocalTransform>, RefRW<RotationComponent>, RefRW<CooldownTimer>, RefRO<CanonSenseComponent>, RefRO<LocalToWorld>>())
         {
             coolDownTimer.ValueRW.TimeLeft -= dt;
             //Debug.Log(coolDownTimer.ValueRW.TimeLeft);
             if (coolDownTimer.ValueRW.TimeLeft > 0f)
                 continue; // not ready to shoot yet
 
-            float3 origin = transform.ValueRO.Position;
-            float3 dir = transform.ValueRO.Up();          // your "barrel" direction
+            float3 origin = WorldPos.ValueRO.Position;
+            float3 dir = transform.ValueRO.Forward();          // your "barrel" direction
 
             //float speed = cannonBall.ValueRO.projectileSpeed;
 
@@ -49,7 +49,7 @@ partial struct ShootingBallSystem : ISystem
                 });
 
             // Reset rotation target after shooting
-            rotation.ValueRW.desiredPosition = float3.zero;
+            //rotation.ValueRW.desiredPosition = float3.zero;
 
             // Reset cooldown with randomness
             var rand = new Unity.Mathematics.Random(coolDownTimer.ValueRW.Seed);
