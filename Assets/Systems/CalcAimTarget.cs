@@ -19,22 +19,18 @@ partial struct CalcAimTarget : ISystem
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        foreach (var (transform, rotation, team, sense) in SystemAPI.Query<RefRO<LocalTransform>, RefRW<RotationComponent>, RefRO<TeamComponent>, RefRO<CanonSenseComponent>>())
+        foreach (var (transform, rotation, team, sense, toWorld) in SystemAPI.Query<RefRO<LocalTransform>, RefRW<RotationComponent>, RefRO<TeamComponent>, RefRO<CanonSenseComponent>, RefRO<LocalToWorld>>())
         {
-              
-            float3 pos = transform.ValueRO.Position;
-            if (math.all(rotation.ValueRO.desiredPosition == pos) || math.all(rotation.ValueRO.desiredPosition == float3.zero))
-            {
-                //Debug.Log("Here");
-                continue; // No target currently  
-            }
+            
+            float3 pos = toWorld.ValueRO.Position;
+            //Debug.Log("Canon pos: " + pos);
             float senseDistSq = sense.ValueRO.senseDistance * sense.ValueRO.senseDistance;
             float projSpeed = sense.ValueRO.cannonballSpeed;
             float3 bestTarget = float3.zero;
             float bestDistSq = float.MaxValue;
-            float3 forward = transform.ValueRO.Up();
+            float3 forward = transform.ValueRO.Forward();
 
-            foreach (var (otherTransform, speed, otherTeam) in SystemAPI.Query<RefRO<LocalTransform>, RefRO<SpeedComponent>, RefRO<TeamComponent>>())
+            foreach (var (otherTransform, speed, otherTeam, shipSense) in SystemAPI.Query<RefRO<LocalTransform>, RefRO<SpeedComponent>, RefRO<TeamComponent>, RefRO<ShipSenseComponent>>())
             {
                 bool isEnemy = otherTeam.ValueRO.redTeam != team.ValueRO.redTeam;
                 float3 otherPos = otherTransform.ValueRO.Position;
@@ -59,7 +55,7 @@ partial struct CalcAimTarget : ISystem
                     bestDistSq = distSq;
                     // Predictive aim, no wind or own movement considered  
                     float dist = math.sqrt(distSq);
-                    float3 moveDir = otherTransform.ValueRO.Up();
+                    float3 moveDir = otherTransform.ValueRO.Forward();
                     float3 targetVel = moveDir * speed.ValueRO.speed;
                     float timeToHit = dist / projSpeed;
                     float3 predictedPos = otherPos + targetVel * timeToHit;
@@ -69,6 +65,7 @@ partial struct CalcAimTarget : ISystem
             // Rotate to best target found (or back to 0 if none)  
             rotation.ValueRW.desiredPosition = bestTarget;
           //Debug.Log("End");
+          
         }
     }
 
