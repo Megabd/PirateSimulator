@@ -126,8 +126,8 @@ Transform:
   - {fileID: 3675769056269287600}
   - {fileID: 2996323219077892193}
   - {fileID: 6302764911804077353}
-  - {fileID: 4544300482632550829}
   - {fileID: 3743140360748710913}
+  - {fileID: 4544300482632550829}
   - {fileID: 5331294652645013078}
   - {fileID: 5926170657203771578}
   m_Father: {fileID: 0}
@@ -203,8 +203,8 @@ MonoBehaviour:
   Cannons:
   - {fileID: 6543944948330513806}
   - {fileID: 2608213237463226566}
-  - {fileID: 5500388710105236546}
   - {fileID: 4663364192652095982}
+  - {fileID: 5500388710105236546}
   - {fileID: 4231491839314574265}
   - {fileID: 2411725452557030741}
   Mast: {fileID: 18675745143003342}
@@ -363,6 +363,7 @@ GameObject:
   - component: {fileID: 5926170657203771578}
   - component: {fileID: 1610721978970546306}
   - component: {fileID: 6013858118334815998}
+  - component: {fileID: 4984574363441755756}
   m_Layer: 0
   m_Name: EDCannon (5)
   m_TagString: Untagged
@@ -441,6 +442,18 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &4984574363441755756
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2411725452557030741}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d8e7e06654bed9d43b1c6a5b7a68571d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CannonAuthoring
 --- !u!1 &2608213237463226566
 GameObject:
   m_ObjectHideFlags: 0
@@ -452,6 +465,7 @@ GameObject:
   - component: {fileID: 6302764911804077353}
   - component: {fileID: 1373730380425571601}
   - component: {fileID: 6214848202633089901}
+  - component: {fileID: 4943560173151912236}
   m_Layer: 0
   m_Name: EDCannon (1)
   m_TagString: Untagged
@@ -530,6 +544,18 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &4943560173151912236
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2608213237463226566}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d8e7e06654bed9d43b1c6a5b7a68571d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CannonAuthoring
 --- !u!1 &3304745712744724029
 GameObject:
   m_ObjectHideFlags: 0
@@ -630,6 +656,7 @@ GameObject:
   - component: {fileID: 5331294652645013078}
   - component: {fileID: 980381702794055278}
   - component: {fileID: 5239068407513690130}
+  - component: {fileID: 886871982483169345}
   m_Layer: 0
   m_Name: EDCannon (4)
   m_TagString: Untagged
@@ -708,6 +735,18 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &886871982483169345
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4231491839314574265}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d8e7e06654bed9d43b1c6a5b7a68571d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CannonAuthoring
 --- !u!1 &4663364192652095982
 GameObject:
   m_ObjectHideFlags: 0
@@ -719,6 +758,7 @@ GameObject:
   - component: {fileID: 3743140360748710913}
   - component: {fileID: 8617037110745482297}
   - component: {fileID: 3655294088905882181}
+  - component: {fileID: 4914616782496539480}
   m_Layer: 0
   m_Name: EDCannon (3)
   m_TagString: Untagged
@@ -797,6 +837,18 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &4914616782496539480
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4663364192652095982}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d8e7e06654bed9d43b1c6a5b7a68571d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CannonAuthoring
 --- !u!1 &5500388710105236546
 GameObject:
   m_ObjectHideFlags: 0
@@ -808,6 +860,7 @@ GameObject:
   - component: {fileID: 4544300482632550829}
   - component: {fileID: 8896591674050769301}
   - component: {fileID: 4492589110950121449}
+  - component: {fileID: 781490440399531980}
   m_Layer: 0
   m_Name: EDCannon (2)
   m_TagString: Untagged
@@ -886,6 +939,18 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &781490440399531980
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5500388710105236546}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d8e7e06654bed9d43b1c6a5b7a68571d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CannonAuthoring
 --- !u!1 &6543944948330513806
 GameObject:
   m_ObjectHideFlags: 0
@@ -897,6 +962,7 @@ GameObject:
   - component: {fileID: 2996323219077892193}
   - component: {fileID: 7922544074163875929}
   - component: {fileID: 2944629439581900325}
+  - component: {fileID: 8710555481126313422}
   m_Layer: 0
   m_Name: EDCannon
   m_TagString: Untagged
@@ -975,3 +1041,15 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &8710555481126313422
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6543944948330513806}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d8e7e06654bed9d43b1c6a5b7a68571d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CannonAuthoring

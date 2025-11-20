@@ -1,5 +1,7 @@
 using Unity.Entities;
 using UnityEngine;
+using Unity.Mathematics;
+using Unity.Transforms;
 
 public class ShipAuthoring : MonoBehaviour
 {
@@ -9,21 +11,24 @@ public class ShipAuthoring : MonoBehaviour
 
     class Baker : Baker<ShipAuthoring>
     {
+
         public override void Bake(ShipAuthoring authoring)
         {
             // GetEntity returns the Entity baked from the GameObject
             var entity = GetEntity(authoring, TransformUsageFlags.Dynamic);
-
 
             var buffer = AddBuffer<CannonElement>(entity);
 
             foreach (var cannonGo in authoring.Cannons)
             {
                 if (cannonGo == null) continue;
+                var cannon = GetEntity(cannonGo, TransformUsageFlags.Dynamic);
+                //AddComponent(cannon, new TeamComponent { redTeam = true });
                 buffer.Add(new CannonElement
                 {
-                    Cannon = GetEntity(cannonGo, TransformUsageFlags.Dynamic)
+                    Cannon = cannon
                 });
+                //AddComponent(cannon, new TeamComponent { redTeam = true });
             }
 
             AddComponent(entity, new Ship
@@ -31,6 +36,14 @@ public class ShipAuthoring : MonoBehaviour
                 Mast = GetEntity(authoring.Mast, TransformUsageFlags.Dynamic),
                 Sail = GetEntity(authoring.Sail, TransformUsageFlags.Dynamic)
             });
+            AddComponent(entity, new SpeedComponent { speed = 3.0f });
+            AddComponent(entity, new RotationComponent { turnSpeed = 60.0f, desiredPosition = new float3(0.0f, 0.0f, 0.0f), maxTurnAngle = 360.0f});
+            AddComponent(entity, new HealthComponent { health = 5 });
+            AddComponent(entity, new WindComponent { windDirection = new float2(0.0f, 0.0f), power = 0.0f });
+            AddComponent(entity, new TeamComponent { redTeam = true });
+            AddComponent(entity, new ShipSenseComponent { sampleOffset = 50.0f, sampleRadius = 100.0f});
+            AddComponent(entity, new CooldownTimer { TimeLeft = 1.0f, MinSecs = 5.0f, MaxSecs = 15.0f, Seed = 1 });
+
         }
 }
 
@@ -38,6 +51,8 @@ public class ShipAuthoring : MonoBehaviour
     public struct CannonElement : IBufferElementData
     {
         public Entity Cannon;
+        
+
     }
 
     public struct Ship : IComponentData

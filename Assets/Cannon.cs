@@ -10,9 +10,6 @@ public class Cannon : MonoBehaviour
     [SerializeField] Vector2 RandomDelayInterval = new Vector2(0.1f, 0.5f); // random delay variation
     [SerializeField] float turnSpeed = 10f;
 
-
-
-
     float CannonBallSpeed;
     private Quaternion startLocalRotation;
 
