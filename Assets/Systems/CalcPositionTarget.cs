@@ -25,8 +25,8 @@ partial struct CalcPositionTarget : ISystem
             if (timer.ValueRW.TimeLeft > 0f) continue;
 
             float3 pos = transform.ValueRO.Position;
-            float3 fwd = math.normalize(new float3(transform.ValueRO.Up().x, 0, transform.ValueRO.Up().z));
-            float3 right = math.normalize(math.cross(math.up(), fwd));
+            float3 fwd = math.normalize(new float3(transform.ValueRO.Forward().x, 0, transform.ValueRO.Forward().z));
+            float3 right = math.normalize(math.cross(math.forward(), fwd));
 
             float offset = sense.ValueRO.sampleOffset;
 
@@ -63,7 +63,7 @@ partial struct CalcPositionTarget : ISystem
 
             rotation.ValueRW.desiredPosition = chosen;
 
-            //Debug.Log(chosen);
+            //Debug.Log("Test: " + rotation.ValueRW.desiredPosition);
 
             Unity.Mathematics.Random rand = new Unity.Mathematics.Random(timer.ValueRW.Seed);
             timer.ValueRW.TimeLeft = rand.NextFloat(timer.ValueRW.MinSecs, timer.ValueRW.MaxSecs);

@@ -17,15 +17,14 @@ partial struct MovementSystem : ISystem
     {
 
         float dt = SystemAPI.Time.DeltaTime;
-        var tilt = quaternion.Euler(math.radians(90f), 0f, 0f);
-        var yaw = quaternion.RotateY(0);
+        
 
         foreach (var (transform, SpeedComponent, WindComponent) in SystemAPI.Query<RefRW<LocalTransform>, RefRO<SpeedComponent>, RefRO<WindComponent>>()) 
         {
 
            
-            transform.ValueRW.Rotation = math.mul(yaw, tilt);
-            float3 upVector = transform.ValueRO.Up();
+            //
+            float3 upVector = transform.ValueRO.Forward();
 
             //Debug.Log("x: " + upVector.x);
             //Debug.Log("z: " + upVector.z);
