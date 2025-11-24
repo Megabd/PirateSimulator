@@ -15,15 +15,16 @@ public partial struct CannonBallSystem : ISystem
     {
         var ecbSingleton = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
 
-        new CannonBallJob
+        new CannonBallMoveJob
         {
             ECB = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged),
             DeltaTime = SystemAPI.Time.DeltaTime
-        }.Schedule(); //multithreat here pls for improved performance
+        }.Schedule(); // you can upgrade to ScheduleParallel later
     }
 }
+
 [BurstCompile]
-public partial struct CannonBallJob : IJobEntity
+public partial struct CannonBallMoveJob : IJobEntity
 {
     public EntityCommandBuffer ECB;
     public float DeltaTime;

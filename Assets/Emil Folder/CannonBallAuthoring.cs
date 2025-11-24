@@ -5,6 +5,7 @@ using UnityEngine;
 
 public class CannonBallAuthoring : MonoBehaviour
 {
+    public float Radius = 0.5f;
     class Baker : Baker<CannonBallAuthoring>
     {
         public override void Bake(CannonBallAuthoring authoring)
@@ -20,4 +21,5 @@ public struct CannonBalls : IComponentData
 {
     public float3 Velocity;
     public float Lifetime;
+    public float Radius;
 }

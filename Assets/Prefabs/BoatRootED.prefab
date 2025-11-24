@@ -274,13 +274,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.Physics.Custom::Unity.Physics.Authoring.PhysicsShapeAuthoring
   m_ShapeType: 0
   m_PrimitiveCenter:
-    x: 0.000000014901161
-    y: 0.123700015
+    x: 0.09
+    y: 0.6185001
     z: 0
   m_PrimitiveSize:
-    x: 0.32000005
-    y: 0.4474001
-    z: 0.40000007
+    x: 0.95
+    y: 2.2370005
+    z: 2.0000002
   m_PrimitiveOrientation:
     Value:
       x: -0
@@ -288,15 +288,15 @@ MonoBehaviour:
       z: 0
     RotationOrder: 4
   m_Capsule:
-    Height: 0.4474001
-    Radius: 0.20000003
+    Height: 2.2370005
+    Radius: 1.0000001
     Axis: 1
   m_Cylinder:
-    Height: 0.32000005
-    Radius: 0.22370005
+    Height: 0.95
+    Radius: 1.1185002
     Axis: 0
   m_CylinderSideCount: 20
-  m_SphereRadius: 0.22370005
+  m_SphereRadius: 1.1185002
   m_MinimumSkinnedVertexWeight: 0.1
   m_ConvexHullGenerationParameters:
     m_SimplificationTolerance: 0.01
@@ -309,7 +309,7 @@ MonoBehaviour:
     m_Template: {fileID: 0}
     m_CollisionResponse:
       m_Override: 0
-      m_Value: 0
+      m_Value: 3
     m_Friction:
       m_Override: 0
       m_Value:

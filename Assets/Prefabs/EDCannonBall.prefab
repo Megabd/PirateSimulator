@@ -236,13 +236,13 @@ MonoBehaviour:
     m_CustomMaterialTags:
       m_Override: 0
       m_Value:
-        Tag00: 0
-        Tag01: 0
-        Tag02: 0
-        Tag03: 0
-        Tag04: 0
-        Tag05: 0
-        Tag06: 0
-        Tag07: 0
+        Tag00: 1
+        Tag01: 1
+        Tag02: 1
+        Tag03: 1
+        Tag04: 1
+        Tag05: 1
+        Tag06: 1
+        Tag07: 1
     m_SerializedVersion: 1
   m_SerializedVersion: 1

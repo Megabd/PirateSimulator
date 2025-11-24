@@ -1,55 +1,81 @@
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
-using Unity.Physics;
-using Unity.Physics.Systems;
+using Unity.Mathematics;
+using Unity.Transforms;
 
 [BurstCompile]
-public partial struct CannonballCollisionSystem : ISystem
+[UpdateInGroup(typeof(SimulationSystemGroup))]
+[UpdateAfter(typeof(CannonBallSystem))] // after movement
+public partial struct CannonBallCollisionSystem : ISystem
 {
-    private ComponentLookup<CannonBalls> _cannonballLookup;
-
+    [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
-        state.RequireForUpdate<SimulationSingleton>();
-        _cannonballLookup = state.GetComponentLookup<CannonBalls>(true);
-    }
-
-    public void OnUpdate(ref SystemState state)
-    {
-        var simulation = SystemAPI.GetSingleton<SimulationSingleton>();
-
-        _cannonballLookup.Update(ref state);
-
-        var ecb = SystemAPI
-            .GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>()
-            .CreateCommandBuffer(state.WorldUnmanaged);
-
-        var job = new CannonballTriggerJob
-        {
-            CannonballLookup = _cannonballLookup,
-            Ecb = ecb
-        };
-
-        state.Dependency = job.Schedule(simulation, state.Dependency);
+        state.RequireForUpdate<CannonBalls>();
     }
 
     [BurstCompile]
-    struct CannonballTriggerJob : ITriggerEventsJob
+    public void OnUpdate(ref SystemState state)
     {
-        [ReadOnly] public ComponentLookup<CannonBalls> CannonballLookup;
-        public EntityCommandBuffer Ecb;
+        var ecbSingleton = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
+        var ecb = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged);
 
-        public void Execute(TriggerEvent ev)
+        var balls = new NativeList<BallData>(Allocator.TempJob);
+
+        foreach (var (ball, xform, entity)
+                 in SystemAPI.Query<RefRO<CannonBalls>, RefRO<LocalTransform>>().WithEntityAccess())
         {
-            var a = ev.EntityA;
-            var b = ev.EntityB;
+            // Ignore brand-new balls to avoid instant self-collisions at spawn
+            if (ball.ValueRO.Lifetime < 0.05f)
+                continue;
 
-            if (CannonballLookup.HasComponent(a))
-                Ecb.DestroyEntity(a);
-
-            if (CannonballLookup.HasComponent(b))
-                Ecb.DestroyEntity(b);
+            balls.Add(new BallData
+            {
+                Entity = entity,
+                Position = xform.ValueRO.Position,
+                Radius = ball.ValueRO.Radius
+            });
         }
+
+        if (balls.Length <= 1)
+        {
+            balls.Dispose();
+            return;
+        }
+
+        var toDestroy = new NativeParallelHashSet<Entity>(balls.Length * 2, Allocator.Temp);
+
+        for (int i = 0; i < balls.Length; i++)
+        {
+            var a = balls[i];
+            for (int j = i + 1; j < balls.Length; j++)
+            {
+                var b = balls[j];
+
+                float sumRadius = a.Radius + b.Radius;
+                float3 diff = a.Position - b.Position;
+                float distSq = math.lengthsq(diff);
+
+                if (distSq <= sumRadius * sumRadius)
+                {
+                    toDestroy.Add(a.Entity);
+                    toDestroy.Add(b.Entity);
+                }
+            }
+        }
+
+        foreach (var ent in toDestroy)
+            ecb.DestroyEntity(ent);
+
+        toDestroy.Dispose();
+        balls.Dispose();
+    }
+
+    private struct BallData
+    {
+        public Entity Entity;
+        public float3 Position;
+        public float Radius;
     }
 }

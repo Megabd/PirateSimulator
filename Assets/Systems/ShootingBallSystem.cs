@@ -56,7 +56,8 @@ partial struct ShootingBallSystem : ISystem
             em.SetComponentData(ball, new CannonBalls
             {
                 Velocity = cannonVel + dir * 10f,
-                Lifetime = 0f
+                Lifetime = 0f,
+                Radius = 0.5f //canonball hitbox
             });
 
             rotation.ValueRW.desiredPosition = float3.zero;
