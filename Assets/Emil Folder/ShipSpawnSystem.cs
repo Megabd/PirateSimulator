@@ -56,9 +56,13 @@ public partial struct ShipSpawnSystem : ISystem
             em.SetComponentData(entities[i],
                 new CooldownTimer { TimeLeft = 1.0f, MinSecs = 5.0f, MaxSecs = 15.0f, Seed = seed });
 
-            // shipflag color angle
+            //ship color
             var ship = em.GetComponentData<ShipAuthoring.Ship>(entities[i]);
             var sailEntity = ship.Sail;
+            if (!em.HasComponent<URPMaterialPropertyBaseColor>(sailEntity))
+            {
+                em.AddComponent<URPMaterialPropertyBaseColor>(sailEntity);
+            }
             float4 sailColor = team
                 ? new float4(1f, 0f, 0f, 1f)   // red
                 : new float4(0f, 0f, 1f, 1f);  // blue
