@@ -2,8 +2,8 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
+using Unity.Rendering;
 using Unity.Transforms;
-using UnityEngine;
 
 public partial struct ShipSpawnSystem : ISystem
 {
@@ -55,6 +55,17 @@ public partial struct ShipSpawnSystem : ISystem
             em.SetComponentData(entities[i], new TeamComponent { redTeam = team });
             em.SetComponentData(entities[i],
                 new CooldownTimer { TimeLeft = 1.0f, MinSecs = 5.0f, MaxSecs = 15.0f, Seed = seed });
+
+            // shipflag color angle
+            var ship = em.GetComponentData<ShipAuthoring.Ship>(entities[i]);
+            var sailEntity = ship.Sail;
+            float4 sailColor = team
+                ? new float4(1f, 0f, 0f, 1f)   // red
+                : new float4(0f, 0f, 1f, 1f);  // blue
+            em.SetComponentData(sailEntity, new URPMaterialPropertyBaseColor { Value = sailColor });
+
+
+
             var cannonBuffer = em.GetBuffer<ShipAuthoring.CannonElement>(entities[i]);
             int j = 0;
             // Apply team component to each cannon entity
