@@ -1,7 +1,11 @@
 using Unity.Burst;
 using Unity.Entities;
 using Unity.Transforms;
+using Unity.Physics.Systems;
 
+[BurstCompile]
+[UpdateInGroup(typeof(FixedStepSimulationSystemGroup))]
+[UpdateBefore(typeof(PhysicsSystemGroup))]
 public partial struct CannonBallSystem : ISystem
 {
     [BurstCompile]
