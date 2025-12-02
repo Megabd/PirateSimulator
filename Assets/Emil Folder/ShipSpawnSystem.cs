@@ -25,8 +25,10 @@ public partial struct ShipSpawnSystem : ISystem
         var entities = new NativeArray<Entity>(count, Allocator.Temp);
         em.Instantiate(config.ShipPrefab, entities);
 
-        const float halfWidth = 150f;  // 300 wide
-        const float halfHeight = 50f;   // 100 tall
+        float halfWidth = config.ShipCount * 0.25f;  // 300 wide
+        float halfHeight = config.ShipCount * 0.125f;   // 100 tall
+        //float halfWidth = 15000f;  // 300 wide
+        //float halfHeight = 5000f;   // 100 tall
         var rng = Unity.Mathematics.Random.CreateFromIndex(1337u);
         uint seed = 1;
         bool team = true;
