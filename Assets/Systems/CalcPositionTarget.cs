@@ -1,11 +1,15 @@
-using Unity.Burst;
-using Unity.Entities;
-using Unity.Transforms;
-using Unity.Mathematics;
-using UnityEngine.SocialPlatforms.Impl;
 using NUnit.Framework.Internal;
+using System.Security.Principal;
 using TMPro;
+using Unity.Burst;
+using Unity.Collections;
+using Unity.Entities;
+using Unity.Mathematics;
+using Unity.Physics;
+using Unity.Transforms;
 using UnityEngine;
+using UnityEngine.SocialPlatforms.Impl;
+using UnityEngine.Windows;
 
 partial struct CalcPositionTarget : ISystem
 {
@@ -18,9 +22,13 @@ partial struct CalcPositionTarget : ISystem
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        float dt = SystemAPI.Time.DeltaTime;
-        foreach (var (transform, rotation, team, sense, timer) in SystemAPI.Query<RefRO<LocalTransform>, RefRW<RotationComponent>, RefRO<TeamComponent>, RefRO<ShipSenseComponent>, RefRW<CooldownTimer>>())
+
+        var physicsWorld = SystemAPI.GetSingleton<PhysicsWorldSingleton>().PhysicsWorld;
+        NativeList<DistanceHit> hits = new NativeList<DistanceHit>(Allocator.Temp);
+
+        foreach (var (transform, rotation, team, sense, timer, entity) in SystemAPI.Query<RefRO<LocalTransform>, RefRW<RotationComponent>, RefRO<TeamComponent>, RefRO<ShipSenseComponent>, RefRW<CooldownTimer>>().WithEntityAccess())
         {
+            /*
             timer.ValueRW.TimeLeft -= dt;
             if (timer.ValueRW.TimeLeft > 0f) continue;
 
@@ -67,8 +75,117 @@ partial struct CalcPositionTarget : ISystem
 
             Unity.Mathematics.Random rand = new Unity.Mathematics.Random(timer.ValueRW.Seed);
             timer.ValueRW.TimeLeft = rand.NextFloat(timer.ValueRW.MinSecs, timer.ValueRW.MaxSecs);
-            timer.ValueRW.Seed = rand.NextUInt();
+            timer.ValueRW.Seed = rand.NextUInt();*/
+
+            float3 pos = transform.ValueRO.Position;
+            float3 currentTarget = rotation.ValueRO.desiredPosition;
+
+            float arriveThreshold = 1f; //so it can actually reach the target
+            float arriveThresholdSq = arriveThreshold * arriveThreshold;
+
+            bool hasTarget = !math.all(currentTarget == float3.zero);
+
+            if (hasTarget && math.distancesq(pos, currentTarget) > arriveThresholdSq) continue;
+
+            //baldur kode
+            float3 fwd = math.normalize(new float3(transform.ValueRO.Forward().x, 0, transform.ValueRO.Forward().z));
+            float3 right = math.normalize(math.cross(new float3(0, 1, 0), fwd));
+
+            float offset = sense.ValueRO.sampleOffset;
+            float r = sense.ValueRO.sampleRadius;
+            float r2 = r * r;
+
+            float3 s0 = pos + fwd * offset; // forward
+            float3 s1 = pos - right * offset; // left
+            float3 s2 = pos + right * offset; // right
+            float3 s3 = pos - fwd * offset; // back
+
+            int4 allyCounts = 0;
+            bool4 hasEnemy = false;
+
+            // one big circle
+            float bigRadius = offset + r;
+
+            var input = new PointDistanceInput
+            {
+                Position = pos,
+                MaxDistance = bigRadius,
+                Filter = new CollisionFilter
+                {
+                    BelongsTo = 1 << 0,
+                    CollidesWith = 1 << 1,
+                    GroupIndex = 0
+                }
+            };
+            hits.Clear();
+            
+            if (physicsWorld.CalculateDistance(input, ref hits))
+            {
+                for (int i = 0; i < hits.Length; i++)
+                {
+                    var body  = physicsWorld.Bodies[hits[i].RigidBodyIndex];
+                    Entity other = body.Entity;
+
+                    if (other == entity)
+                        continue;
+
+                    if (!SystemAPI.HasComponent<LocalTransform>(other) ||
+                        !SystemAPI.HasComponent<TeamComponent>(other))
+                        continue;
+
+                    var otherTransform = SystemAPI.GetComponent<LocalTransform>(other);
+                    var otherTeam      = SystemAPI.GetComponent<TeamComponent>(other);
+
+                    float3 p = otherTransform.Position;
+
+                    // same sample logic as before
+                    float3 d0 = p - s0;
+                    if (math.lengthsq(d0) <= r2)
+                    {
+                        bool ally = otherTeam.redTeam == team.ValueRO.redTeam;
+                        allyCounts.x += ally ? 1 : -1;
+                        hasEnemy.x |= !ally;
+                    }
+
+                    float3 d1 = p - s1;
+                    if (math.lengthsq(d1) <= r2)
+                    {
+                        bool ally = otherTeam.redTeam == team.ValueRO.redTeam;
+                        allyCounts.y += ally ? 1 : -1;
+                        hasEnemy.y |= !ally;
+                    }
+
+                    float3 d2 = p - s2;
+                    if (math.lengthsq(d2) <= r2)
+                    {
+                        bool ally = otherTeam.redTeam == team.ValueRO.redTeam;
+                        allyCounts.z += ally ? 1 : -1;
+                        hasEnemy.z |= !ally;
+                    }
+
+                    float3 d3 = p - s3;
+                    if (math.lengthsq(d3) <= r2)
+                    {
+                        bool ally = otherTeam.redTeam == team.ValueRO.redTeam;
+                        allyCounts.w += ally ? 1 : -1;
+                        hasEnemy.w |= !ally;
+                    }
+                }
+            }
+
+            // choose best direction
+            float3 chosen = s0;
+            int best = -1;
+
+            if (hasEnemy.x && allyCounts.x > best) { chosen = s0; best = allyCounts.x; }
+            if (hasEnemy.y && allyCounts.y > best) { chosen = s1; best = allyCounts.y; }
+            if (hasEnemy.z && allyCounts.z > best) { chosen = s2; best = allyCounts.z; }
+            if (hasEnemy.w && allyCounts.w > best) { chosen = s3; best = allyCounts.w; }
+
+            rotation.ValueRW.desiredPosition = chosen;
         }
+        
+        hits.Dispose();
     }
 
     [BurstCompile]

@@ -11,9 +11,11 @@ partial struct CalcAimTarget : ISystem
     [BurstCompile]
     public void OnCreate(ref SystemState state){}
 
+
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
+        var physicsWorld = SystemAPI.GetSingleton<PhysicsWorldSingleton>().PhysicsWorld;
         foreach (var (transform, rotation, team, sense, toWorld) in SystemAPI.Query<RefRO<LocalTransform>, RefRW<RotationComponent>, RefRO<TeamComponent>, RefRO<CanonSenseComponent>, RefRO<LocalToWorld>>())
         {
             //old shit ass code 400 ms
@@ -68,9 +70,6 @@ partial struct CalcAimTarget : ISystem
           //Debug.Log("End");*/
 
             //40 ms nice clean code
-            var physicsWorldSingleton = SystemAPI.GetSingleton<PhysicsWorldSingleton>();
-            var physicsWorld = physicsWorldSingleton.PhysicsWorld;
-
             if (!rotation.ValueRO.desiredPosition.Equals(float3.zero)) continue;
 
             float3 pos = toWorld.ValueRO.Position;

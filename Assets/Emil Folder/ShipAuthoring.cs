@@ -44,7 +44,7 @@ public class ShipAuthoring : MonoBehaviour
             AddComponent(entity, new HealthComponent { health = 5 });
             AddComponent(entity, new WindComponent { windDirection = new float2(0.0f, 0.0f), power = 0.0f });
             AddComponent(entity, new TeamComponent { redTeam = true });
-            AddComponent(entity, new ShipSenseComponent { sampleOffset = 50.0f, sampleRadius = 100.0f});
+            AddComponent(entity, new ShipSenseComponent { sampleOffset = 50.0f, sampleRadius = 1000.0f});
             AddComponent(entity, new CooldownTimer { TimeLeft = 1.0f, MinSecs = 5.0f, MaxSecs = 15.0f, Seed = 1 });
 
         }
