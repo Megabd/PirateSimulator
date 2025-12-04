@@ -29,7 +29,7 @@ partial struct CalcPositionTarget : ISystem
 
         var transformLookup = SystemAPI.GetComponentLookup<LocalTransform>(true);
         var teamLookup = SystemAPI.GetComponentLookup<TeamComponent>(true);
-        var ltwLookup = SystemAPI.GetComponentLookup<LocalToWorld>(true);
+        //var ltwLookup = SystemAPI.GetComponentLookup<LocalToWorld>(true); error here
 
         CollisionFilter filter = new CollisionFilter
         {
@@ -137,7 +137,7 @@ partial struct CalcPositionTarget : ISystem
                     }
                 }
             }
-            
+            /*
             if (!hasEnemy.x && !hasEnemy.y && !hasEnemy.z && !hasEnemy.w)
             {
                 float3 localTarget = float3.zero;
@@ -149,7 +149,7 @@ partial struct CalcPositionTarget : ISystem
                 rotation.ValueRW.desiredPosition = localTarget;
                 continue;
             }
-
+            */
             // choose best direction
             float3 chosen = s0;
             int best = -1;

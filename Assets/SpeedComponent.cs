@@ -73,6 +73,12 @@ public struct AvoidanceState : IComponentData
     public float3 Target;
 }
 
-
+public struct Aim : IComponentData
+{
+    public float TimeLeft;
+    public float Interval;
+    public bool HasTarget;
+    public float3 TargetPosition;
+}
 
 
