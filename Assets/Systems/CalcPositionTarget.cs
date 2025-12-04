@@ -27,56 +27,20 @@ partial struct CalcPositionTarget : ISystem
         NativeList<DistanceHit> hits = new NativeList<DistanceHit>(Allocator.Temp);
         float dt = SystemAPI.Time.DeltaTime;
 
+        var shipSenseLookup = SystemAPI.GetComponentLookup<ShipSenseComponent>(true);
+        var transformLookup = SystemAPI.GetComponentLookup<LocalTransform>(true);
+        var teamLookup = SystemAPI.GetComponentLookup<TeamComponent>(true);
+        var ltwLookup = SystemAPI.GetComponentLookup<LocalToWorld>(true);
+
+        CollisionFilter filter = new CollisionFilter
+        {
+            BelongsTo = 1 << 0,
+            CollidesWith = 1 << 1,
+            GroupIndex = 0
+        };
+
         foreach (var (transform, rotation, team, sense, timer, entity) in SystemAPI.Query<RefRO<LocalTransform>, RefRW<RotationComponent>, RefRO<TeamComponent>, RefRO<ShipSenseComponent>, RefRW<CooldownTimer>>().WithEntityAccess())
         {
-            /*
-            timer.ValueRW.TimeLeft -= dt;
-            if (timer.ValueRW.TimeLeft > 0f) continue;
-
-            float3 pos = transform.ValueRO.Position;
-            float3 fwd = math.normalize(new float3(transform.ValueRO.Forward().x, 0, transform.ValueRO.Forward().z));
-            float3 right = math.normalize(math.cross(math.forward(), fwd));
-
-            float offset = sense.ValueRO.sampleOffset;
-
-            // Positions samples
-            float3 s0 = pos + fwd * offset; // forward
-            float3 s1 = pos - right * offset; // left
-            float3 s2 = pos + right * offset; // right
-            float3 s3 = pos - fwd * offset; // back
-
-            int4 allyCounts = 0;
-            bool4 hasEnemy = false;
-            float r = sense.ValueRO.sampleRadius;
-            float r2 = r * r;
-            // Replace with physics hit //This also sees cannons currently, might wanna fix this?
-            foreach (var (otherTransform, otherTeamComponent) in SystemAPI.Query<RefRO<LocalTransform>, RefRO<TeamComponent>>())
-            {
-                float3 p = otherTransform.ValueRO.Position;
-                float3 d0 = p - s0; if (math.lengthsq(d0) <= r2) { allyCounts.x += otherTeamComponent.ValueRO.redTeam == team.ValueRO.redTeam ? 1 : -1; hasEnemy.x |= otherTeamComponent.ValueRO.redTeam != team.ValueRO.redTeam; }
-                float3 d1 = p - s1; if (math.lengthsq(d1) <= r2) { allyCounts.y += otherTeamComponent.ValueRO.redTeam == team.ValueRO.redTeam ? 1 : -1; hasEnemy.y |= otherTeamComponent.ValueRO.redTeam != team.ValueRO.redTeam; }
-                float3 d2 = p - s2; if (math.lengthsq(d2) <= r2) { allyCounts.z += otherTeamComponent.ValueRO.redTeam == team.ValueRO.redTeam ? 1 : -1; hasEnemy.z |= otherTeamComponent.ValueRO.redTeam != team.ValueRO.redTeam; }
-                float3 d3 = p - s3; if (math.lengthsq(d3) <= r2) { allyCounts.w += otherTeamComponent.ValueRO.redTeam == team.ValueRO.redTeam ? 1 : -1; hasEnemy.w |= otherTeamComponent.ValueRO.redTeam != team.ValueRO.redTeam; }
-            }
-
-            float3 chosen = s0;
-            int best = -1;
-
-            //Debug.Log("Allies: "+ allyCounts);
-            //Debug.Log("Enemies: " + hasEnemy);
-
-            if (hasEnemy.x && allyCounts.x > best) { chosen = s0; best = allyCounts.x; }
-            else if (hasEnemy.y && allyCounts.y > best) {chosen = s1; best = allyCounts.y; }
-            else if (hasEnemy.z && allyCounts.z > best) {chosen = s2; best = allyCounts.z; }
-            else if (hasEnemy.w && allyCounts.w > best) {chosen = s3; best = allyCounts.w; }
-
-            rotation.ValueRW.desiredPosition = chosen;
-
-            //Debug.Log("Test: " + rotation.ValueRW.desiredPosition);
-
-            Unity.Mathematics.Random rand = new Unity.Mathematics.Random(timer.ValueRW.Seed);
-            timer.ValueRW.TimeLeft = rand.NextFloat(timer.ValueRW.MinSecs, timer.ValueRW.MaxSecs);
-            timer.ValueRW.Seed = rand.NextUInt();*/
 
             timer.ValueRW.TimeLeft -= dt;
             if (timer.ValueRW.TimeLeft > 0f) continue;
@@ -84,9 +48,10 @@ partial struct CalcPositionTarget : ISystem
             float3 pos = transform.ValueRO.Position;
             float3 currentTarget = rotation.ValueRO.desiredPosition;
 
+            /*
             float arriveThreshold = 1f; //so it can actually reach the target
             float arriveThresholdSq = arriveThreshold * arriveThreshold;
-            /*
+            
             bool hasTarget = !math.all(currentTarget == float3.zero);
             if (math.distancesq(pos, currentTarget) > arriveThresholdSq) continue;*/
 
@@ -113,12 +78,7 @@ partial struct CalcPositionTarget : ISystem
             {
                 Position = pos,
                 MaxDistance = bigRadius,
-                Filter = new CollisionFilter
-                {
-                    BelongsTo = 1 << 0,
-                    CollidesWith = 1 << 1,
-                    GroupIndex = 0
-                }
+                Filter = filter
             };
             hits.Clear();
             
@@ -129,14 +89,13 @@ partial struct CalcPositionTarget : ISystem
                     var body  = physicsWorld.Bodies[hits[i].RigidBodyIndex];
                     Entity other = body.Entity;
                     
-                    if (other == entity)
-                        continue;
-                    if (!SystemAPI.HasComponent<LocalTransform>(other) ||
-                        !SystemAPI.HasComponent<TeamComponent>(other))
-                        continue;
+                    if (other == entity) continue;
 
-                    var otherTransform = SystemAPI.GetComponent<LocalTransform>(other);
-                    var otherTeam = SystemAPI.GetComponent<TeamComponent>(other);
+                    if (!shipSenseLookup.HasComponent(other)) continue;
+
+
+                    var otherTransform = transformLookup[other];
+                    var otherTeam = teamLookup[other];
 
                     float3 p = otherTransform.Position;
 
@@ -181,11 +140,13 @@ partial struct CalcPositionTarget : ISystem
             
             if (!hasEnemy.x && !hasEnemy.y && !hasEnemy.z && !hasEnemy.w)
             {
-                //Debug.Log("No enemies detected, resetting target");
-                float3 worldPos = float3.zero;
-                var localToWorld = SystemAPI.GetComponent<LocalToWorld>(entity);
-                float3 localPos = math.transform(math.inverse(localToWorld.Value), worldPos);
-                rotation.ValueRW.desiredPosition = localPos;
+                float3 localTarget = float3.zero;
+                if (ltwLookup.HasComponent(entity))
+                {
+                    var ltw = ltwLookup[entity].Value;
+                    localTarget = math.transform(math.inverse(ltw), float3.zero);
+                }
+                rotation.ValueRW.desiredPosition = localTarget;
                 continue;
             }
 

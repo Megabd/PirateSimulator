@@ -16,6 +16,20 @@ partial struct CalcAimTarget : ISystem
     public void OnUpdate(ref SystemState state)
     {
         var physicsWorld = SystemAPI.GetSingleton<PhysicsWorldSingleton>().PhysicsWorld;
+
+        CollisionFilter filter = new CollisionFilter
+        {
+            BelongsTo = 1 << 0,              // what the RAY "is"
+            CollidesWith = 1 << 1,           // what it SHOULD hit
+            GroupIndex = 0
+        };
+
+        // Cache lookups once per frame instead of using SystemAPI.GetComponent inside the loop
+        var teamLookup = SystemAPI.GetComponentLookup<TeamComponent>(true);
+        var transformLookup = SystemAPI.GetComponentLookup<LocalTransform>(true);
+        var speedLookup = SystemAPI.GetComponentLookup<SpeedComponent>(true);
+
+
         foreach (var (transform, rotation, team, sense, toWorld, timer) in SystemAPI.Query<RefRO<LocalTransform>, RefRW<RotationComponent>, RefRO<TeamComponent>, RefRO<CanonSenseComponent>, RefRO<LocalToWorld>, RefRO<CooldownTimer>>())
         {
             //if(timer.ValueRO.TimeLeft > 0f) continue;
@@ -32,12 +46,7 @@ partial struct CalcAimTarget : ISystem
             {
                 Start = origin,
                 End = pos + forward * maxDistance,
-                Filter = new CollisionFilter
-                {
-                    BelongsTo = 1 << 0,              // what the RAY "is"
-                    CollidesWith = 1 << 1,           // what it SHOULD hit
-                    GroupIndex = 0
-                }
+                Filter = filter
             };
 
 
@@ -45,7 +54,9 @@ partial struct CalcAimTarget : ISystem
             {
                 // hit.Position, hit.SurfaceNormal, hit.RigidBodyIndex, hit.Entity, etc.
                 var hitEntity = physicsWorld.Bodies[hit.RigidBodyIndex].Entity;
-                if (!SystemAPI.HasComponent<TeamComponent>(hitEntity) || !SystemAPI.HasComponent<LocalTransform>(hitEntity) || !SystemAPI.HasComponent<SpeedComponent>(hitEntity))
+                if (!teamLookup.HasComponent(hitEntity) ||
+                    !transformLookup.HasComponent(hitEntity) ||
+                    !speedLookup.HasComponent(hitEntity))
                 {
                     rotation.ValueRW.desiredPosition = bestTarget;
                     continue;
