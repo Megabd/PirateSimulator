@@ -25,6 +25,7 @@ partial struct CalcPositionTarget : ISystem
 
         var physicsWorld = SystemAPI.GetSingleton<PhysicsWorldSingleton>().PhysicsWorld;
         NativeList<DistanceHit> hits = new NativeList<DistanceHit>(Allocator.Temp);
+        float dt = SystemAPI.Time.DeltaTime;
 
         foreach (var (transform, rotation, team, sense, timer, entity) in SystemAPI.Query<RefRO<LocalTransform>, RefRW<RotationComponent>, RefRO<TeamComponent>, RefRO<ShipSenseComponent>, RefRW<CooldownTimer>>().WithEntityAccess())
         {
@@ -77,15 +78,17 @@ partial struct CalcPositionTarget : ISystem
             timer.ValueRW.TimeLeft = rand.NextFloat(timer.ValueRW.MinSecs, timer.ValueRW.MaxSecs);
             timer.ValueRW.Seed = rand.NextUInt();*/
 
+            timer.ValueRW.TimeLeft -= dt;
+            if (timer.ValueRW.TimeLeft > 0f) continue;
+
             float3 pos = transform.ValueRO.Position;
             float3 currentTarget = rotation.ValueRO.desiredPosition;
 
             float arriveThreshold = 1f; //so it can actually reach the target
             float arriveThresholdSq = arriveThreshold * arriveThreshold;
-
+            /*
             bool hasTarget = !math.all(currentTarget == float3.zero);
-
-            if (hasTarget && math.distancesq(pos, currentTarget) > arriveThresholdSq) continue;
+            if (math.distancesq(pos, currentTarget) > arriveThresholdSq) continue;*/
 
             //baldur kode
             float3 fwd = math.normalize(new float3(transform.ValueRO.Forward().x, 0, transform.ValueRO.Forward().z));
@@ -125,22 +128,22 @@ partial struct CalcPositionTarget : ISystem
                 {
                     var body  = physicsWorld.Bodies[hits[i].RigidBodyIndex];
                     Entity other = body.Entity;
-
+                    
                     if (other == entity)
                         continue;
-
                     if (!SystemAPI.HasComponent<LocalTransform>(other) ||
                         !SystemAPI.HasComponent<TeamComponent>(other))
                         continue;
 
                     var otherTransform = SystemAPI.GetComponent<LocalTransform>(other);
-                    var otherTeam      = SystemAPI.GetComponent<TeamComponent>(other);
+                    var otherTeam = SystemAPI.GetComponent<TeamComponent>(other);
 
                     float3 p = otherTransform.Position;
 
                     // same sample logic as before
                     float3 d0 = p - s0;
-                    if (math.lengthsq(d0) <= r2)
+                    bool3 check = d0 <= float3.zero;
+                    if (check.x && check.y && check.z)
                     {
                         bool ally = otherTeam.redTeam == team.ValueRO.redTeam;
                         allyCounts.x += ally ? 1 : -1;
@@ -148,7 +151,8 @@ partial struct CalcPositionTarget : ISystem
                     }
 
                     float3 d1 = p - s1;
-                    if (math.lengthsq(d1) <= r2)
+                    bool3 check1 = d1 <= float3.zero;
+                    if (check1.x && check1.y && check1.z)
                     {
                         bool ally = otherTeam.redTeam == team.ValueRO.redTeam;
                         allyCounts.y += ally ? 1 : -1;
@@ -156,7 +160,8 @@ partial struct CalcPositionTarget : ISystem
                     }
 
                     float3 d2 = p - s2;
-                    if (math.lengthsq(d2) <= r2)
+                    bool3 check2 = d2 <= float3.zero;
+                    if (check2.x && check2.y && check2.z)
                     {
                         bool ally = otherTeam.redTeam == team.ValueRO.redTeam;
                         allyCounts.z += ally ? 1 : -1;
@@ -164,7 +169,8 @@ partial struct CalcPositionTarget : ISystem
                     }
 
                     float3 d3 = p - s3;
-                    if (math.lengthsq(d3) <= r2)
+                    bool3 check3 = d3 <= float3.zero;
+                    if (check3.x && check3.y && check3.z)
                     {
                         bool ally = otherTeam.redTeam == team.ValueRO.redTeam;
                         allyCounts.w += ally ? 1 : -1;
@@ -172,20 +178,36 @@ partial struct CalcPositionTarget : ISystem
                     }
                 }
             }
+            
+            if (!hasEnemy.x && !hasEnemy.y && !hasEnemy.z && !hasEnemy.w)
+            {
+                //Debug.Log("No enemies detected, resetting target");
+                float3 worldPos = float3.zero;
+                var localToWorld = SystemAPI.GetComponent<LocalToWorld>(entity);
+                float3 localPos = math.transform(math.inverse(localToWorld.Value), worldPos);
+                rotation.ValueRW.desiredPosition = localPos;
+                continue;
+            }
 
             // choose best direction
             float3 chosen = s0;
             int best = -1;
-
             if (hasEnemy.x && allyCounts.x > best) { chosen = s0; best = allyCounts.x; }
             if (hasEnemy.y && allyCounts.y > best) { chosen = s1; best = allyCounts.y; }
             if (hasEnemy.z && allyCounts.z > best) { chosen = s2; best = allyCounts.z; }
             if (hasEnemy.w && allyCounts.w > best) { chosen = s3; best = allyCounts.w; }
 
             rotation.ValueRW.desiredPosition = chosen;
+            //Debug.Log("New target: " + rotation.ValueRW.desiredPosition);
+            Unity.Mathematics.Random rand = new Unity.Mathematics.Random(timer.ValueRW.Seed);
+            timer.ValueRW.TimeLeft = rand.NextFloat(timer.ValueRW.MinSecs, timer.ValueRW.MaxSecs);
+            timer.ValueRW.Seed = rand.NextUInt();
+
+
         }
         
         hits.Dispose();
+
     }
 
     [BurstCompile]

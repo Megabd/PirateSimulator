@@ -6,8 +6,11 @@ using UnityEngine;
 
 partial struct ShootingBallSystem : ISystem
 {
+    private Unity.Mathematics.Random rand;
     [BurstCompile]
-    public void OnCreate(ref SystemState state) { }
+    public void OnCreate(ref SystemState state) {
+        rand = new Unity.Mathematics.Random(1);
+    }
 
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
@@ -63,10 +66,7 @@ partial struct ShootingBallSystem : ISystem
             rotation.ValueRW.desiredPosition = float3.zero;
 
             // Reset cooldown with randomness
-            var rand = new Unity.Mathematics.Random(coolDownTimer.ValueRW.Seed);
-            coolDownTimer.ValueRW.TimeLeft =
-                rand.NextFloat(coolDownTimer.ValueRW.MinSecs, coolDownTimer.ValueRW.MaxSecs);
-            coolDownTimer.ValueRW.Seed = rand.NextUInt();
+            coolDownTimer.ValueRW.TimeLeft = rand.NextFloat(coolDownTimer.ValueRW.MinSecs, coolDownTimer.ValueRW.MaxSecs);
         }
 
 

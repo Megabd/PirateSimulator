@@ -27,9 +27,9 @@ public partial struct ShipSpawnSystem : ISystem
 
         float halfWidth = config.ShipCount * 0.25f;  // 300 wide
         float halfHeight = config.ShipCount * 0.125f;   // 100 tall
-        //float halfWidth = 15000f;  // 300 wide
-        //float halfHeight = 5000f;   // 100 tall
-        var rng = Unity.Mathematics.Random.CreateFromIndex(1337u);
+        //float halfWidth = 150f;  // 300 wide
+        //float halfHeight = 50;   // 100 tall
+        var rng = Random.CreateFromIndex(1337u);
         uint seed = 1;
         bool team = true;
         for (int i = 0; i < count; i++)
@@ -53,7 +53,7 @@ public partial struct ShipSpawnSystem : ISystem
             em.SetComponentData(entities[i],
                 LocalTransform.FromPositionRotationScale(pos, quaternion.identity, 1f));
             em.SetComponentData(entities[i],
-                new RotationComponent {turnSpeed = 60.0f, desiredPosition = new float3(1.0f, 0.0f, 1.0f), maxTurnAngle = 360.0f, startRotation = quaternion.identity});
+                new RotationComponent {turnSpeed = 60.0f, desiredPosition = new float3(0.0f, 0.0f, 0.0f), maxTurnAngle = 360.0f, startRotation = quaternion.identity});
             em.SetComponentData(entities[i], new TeamComponent { redTeam = team });
             em.SetComponentData(entities[i],
                 new CooldownTimer { TimeLeft = 1.0f, MinSecs = 5.0f, MaxSecs = 15.0f, Seed = seed });
