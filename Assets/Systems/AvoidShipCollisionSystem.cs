@@ -1,113 +1,145 @@
-using NUnit.Framework.Internal;
-using System.Security.Principal;
-using TMPro;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Physics;
 using Unity.Transforms;
-using UnityEngine;
-using UnityEngine.SocialPlatforms.Impl;
-using UnityEngine.Windows;
 
 partial struct AvoidShipCollisionSystem : ISystem
 {
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
-
+        state.RequireForUpdate<PhysicsWorldSingleton>();
     }
 
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-
         var physicsWorld = SystemAPI.GetSingleton<PhysicsWorldSingleton>().PhysicsWorld;
+        var transformLookup = SystemAPI.GetComponentLookup<LocalTransform>(true);
+
         NativeList<DistanceHit> hits = new NativeList<DistanceHit>(Allocator.Temp);
+
+        CollisionFilter filter = new CollisionFilter
+        {
+            BelongsTo = 1u << 0,
+            CollidesWith = 1u << 1,
+            GroupIndex = 0
+        };
+
         float dt = SystemAPI.Time.DeltaTime;
 
-        foreach (var (transform, rotation, sense, entity) in SystemAPI.Query<RefRO<LocalTransform>, RefRW<RotationComponent>, RefRO<ShipSenseComponent>>().WithEntityAccess())
+        foreach (var (transform, rotation, sense, timer, avoidance, entity)
+            in SystemAPI.Query<
+                RefRO<LocalTransform>,
+                RefRW<RotationComponent>,
+                RefRO<ShipSenseComponent>,
+                RefRW<CollisionScanTimer>,
+                RefRW<AvoidanceState>>()
+                .WithEntityAccess())
         {
-
             float3 pos = transform.ValueRO.Position;
+            float3 fwd3 = math.normalizesafe(new float3(transform.ValueRO.Forward().x, 0f, transform.ValueRO.Forward().z));
+            float2 fwd2 = new float2(fwd3.x, fwd3.z);
 
-            //baldur kode
-            float3 fwd = math.normalize(new float3(transform.ValueRO.Forward().x, 0, transform.ValueRO.Forward().z));
+            timer.ValueRW.TimeLeft -= dt;
 
-            var input = new PointDistanceInput
+            bool scannedThisFrame = timer.ValueRW.TimeLeft <= 0f;
+
+            if (scannedThisFrame)
             {
-                Position = pos,
-                MaxDistance = 7.0f,
-                Filter = new CollisionFilter
-                {
-                    BelongsTo = 1 << 0,
-                    CollidesWith = 1 << 1,
-                    GroupIndex = 0
-                }
-            };
-            hits.Clear();
-            
-            if (physicsWorld.CalculateDistance(input, ref hits))
-            {
-                float distance = 100f;
-                float3 otherPos = float3.zero;
-                for (int i = 0; i < hits.Length; i++)
-                {
-                    var body  = physicsWorld.Bodies[hits[i].RigidBodyIndex];
-                    Entity other = body.Entity;
-                    
-                    if (other == entity)
-                        continue;
-                    if (!SystemAPI.HasComponent<ShipSenseComponent>(other))
-                        continue;
+                timer.ValueRW.TimeLeft = timer.ValueRW.Interval;
 
-                    var otherTransform = SystemAPI.GetComponent<LocalTransform>(other);
-                    var otherRotation = SystemAPI.GetComponent<RotationComponent>(other);
+                float probeOffset = 3f;
+                float probeRadius = 3f;
+                float3 probeCenter = pos + fwd3 * probeOffset;
 
-                    float3 p = otherTransform.Position;
-                    if (math.lengthsq(pos-p) < distance)
+                PointDistanceInput input = new PointDistanceInput
+                {
+                    Position = probeCenter,
+                    MaxDistance = probeRadius,
+                    Filter = filter
+                };
+
+                hits.Clear();
+
+                bool foundShip = physicsWorld.CalculateDistance(input, ref hits);
+                float minDistSq = float.MaxValue;
+                float3 closestPos = pos;
+
+                if (foundShip)
+                {
+                    for (int i = 0; i < hits.Length; i++)
                     {
-                        distance = math.lengthsq(pos-p);
-                        otherPos = otherRotation.desiredPosition;
+                        var body = physicsWorld.Bodies[hits[i].RigidBodyIndex];
+                        Entity other = body.Entity;
+
+                        if (other == entity)
+                            continue;
+
+                        if (!transformLookup.HasComponent(other))
+                            continue;
+
+                        float3 p = transformLookup[other].Position;
+
+                        float3 diff3 = p - pos;
+                        float2 diff2 = new float2(diff3.x, diff3.z);
+
+                        float dotValue = math.dot(fwd2, math.normalizesafe(diff2));
+                        if (dotValue <= 0f)
+                            continue;
+
+                        float d = math.lengthsq(diff2);
+                        if (d < minDistSq)
+                        {
+                            minDistSq = d;
+                            closestPos = p;
+                        }
                     }
                 }
-                float3 newTarget = otherPos-pos;
-                float2 f = new float2(fwd.x, fwd.z);
-                float2 o = new float2(newTarget.x, newTarget.z); 
-                float cross = f.x * o.y - f.y * o.x;
-                float len = math.length(o); 
-                o = o /= len;
-                float rad = 0;
-                if (cross > 0)
+
+                if (minDistSq != float.MaxValue)
                 {
-                     rad = math.radians(-45.0f);
+                    float3 away = pos - closestPos;
+                    float2 away2 = math.normalizesafe(new float2(away.x, away.z));
+                    if (math.lengthsq(away2) > 0f)
+                    {
+                        float cross = fwd2.x * away2.y - fwd2.y * away2.x;
+                        float rad = cross > 0 ? math.radians(45f) : math.radians(-45f);
+
+                        float cos = math.cos(rad);
+                        float sin = math.sin(rad);
+
+                        float2 steer2 = new float2(
+                            fwd2.x * cos - fwd2.y * sin,
+                            fwd2.x * sin + fwd2.y * cos
+                        );
+
+                        steer2 = math.normalizesafe(steer2);
+                        float dist = math.sqrt(minDistSq) + 3f;
+
+                        float3 target = pos + new float3(steer2.x, 0f, steer2.y) * dist;
+
+                        avoidance.ValueRW.Active = true;
+                        avoidance.ValueRW.Target = target;
+                    }
                 }
                 else
                 {
-                    rad = math.radians(45.0f);
+                    avoidance.ValueRW.Active = false;
                 }
-               
-                float cos = math.cos(rad);
-                float sin = math.sin(rad);
-                float2 rot = new float2(o.x * cos - o.y * sin, o.x * sin + o.y * cos);
-                float dist = math.length(otherPos - pos);
-                rotation.ValueRW.desiredPosition = pos + new float3(rot.x, 0f, rot.y) * dist;
-                //Debug.Log("Test");
             }
 
-            
-
-
+            if (avoidance.ValueRW.Active)
+            {
+                rotation.ValueRW.desiredPosition = avoidance.ValueRW.Target;
+            }
         }
-        
-        hits.Dispose();
 
+        hits.Dispose();
     }
 
     [BurstCompile]
-    public void OnDestroy(ref SystemState state)
-    {
-
-    }
+    public void OnDestroy(ref SystemState state) { }
 }

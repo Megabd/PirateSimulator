@@ -61,7 +61,17 @@ public struct PrevPosComponent : IComponentData
     public float3 PrePos;
 }
 
+public struct CollisionScanTimer : IComponentData
+{
+    public float TimeLeft;
+    public float Interval;
+}
 
+public struct AvoidanceState : IComponentData
+{
+    public bool Active;
+    public float3 Target;
+}
 
 
 

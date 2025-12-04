@@ -27,7 +27,6 @@ partial struct CalcPositionTarget : ISystem
         NativeList<DistanceHit> hits = new NativeList<DistanceHit>(Allocator.Temp);
         float dt = SystemAPI.Time.DeltaTime;
 
-        var shipSenseLookup = SystemAPI.GetComponentLookup<ShipSenseComponent>(true);
         var transformLookup = SystemAPI.GetComponentLookup<LocalTransform>(true);
         var teamLookup = SystemAPI.GetComponentLookup<TeamComponent>(true);
         var ltwLookup = SystemAPI.GetComponentLookup<LocalToWorld>(true);
@@ -61,7 +60,6 @@ partial struct CalcPositionTarget : ISystem
 
             float offset = sense.ValueRO.sampleOffset;
             float r = sense.ValueRO.sampleRadius;
-            float r2 = r * r;
 
             float3 s0 = pos + fwd * offset; // forward
             float3 s1 = pos - right * offset; // left
@@ -91,8 +89,10 @@ partial struct CalcPositionTarget : ISystem
                     
                     if (other == entity) continue;
 
-                    if (!shipSenseLookup.HasComponent(other)) continue;
-
+                    if (!transformLookup.HasComponent(other) || !teamLookup.HasComponent(other))
+                    {
+                        continue;
+                    }
 
                     var otherTransform = transformLookup[other];
                     var otherTeam = teamLookup[other];

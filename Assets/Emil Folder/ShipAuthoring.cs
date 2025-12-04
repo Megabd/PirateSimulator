@@ -1,7 +1,8 @@
 using Unity.Entities;
-using UnityEngine;
 using Unity.Mathematics;
 using Unity.Transforms;
+using UnityEngine;
+using static Unity.Entities.EntitiesJournaling;
 
 public class ShipAuthoring : MonoBehaviour
 {
@@ -46,7 +47,8 @@ public class ShipAuthoring : MonoBehaviour
             AddComponent(entity, new TeamComponent { redTeam = true });
             AddComponent(entity, new ShipSenseComponent { sampleOffset = 20.0f, sampleRadius = 100.0f});
             AddComponent(entity, new CooldownTimer { TimeLeft = 1.0f, MinSecs = 5.0f, MaxSecs = 15.0f, Seed = 1 });
-
+            AddComponent(entity, new CollisionScanTimer{ TimeLeft = 2f, Interval = 2f});
+            AddComponent(entity, new AvoidanceState{Active = false,Target = float3.zero});
         }
 }
 

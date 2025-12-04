@@ -29,10 +29,10 @@ partial struct CalcAimTarget : ISystem
         var transformLookup = SystemAPI.GetComponentLookup<LocalTransform>(true);
         var speedLookup = SystemAPI.GetComponentLookup<SpeedComponent>(true);
 
-
         foreach (var (transform, rotation, team, sense, toWorld, timer) in SystemAPI.Query<RefRO<LocalTransform>, RefRW<RotationComponent>, RefRO<TeamComponent>, RefRO<CanonSenseComponent>, RefRO<LocalToWorld>, RefRO<CooldownTimer>>())
         {
-            //if(timer.ValueRO.TimeLeft > 0f) continue;
+            if (timer.ValueRO.TimeLeft > 0.5f) continue;
+            
 
             float3 pos = toWorld.ValueRO.Position;
             float3 forward = transform.ValueRO.Forward();
@@ -54,6 +54,7 @@ partial struct CalcAimTarget : ISystem
             {
                 // hit.Position, hit.SurfaceNormal, hit.RigidBodyIndex, hit.Entity, etc.
                 var hitEntity = physicsWorld.Bodies[hit.RigidBodyIndex].Entity;
+                
                 if (!teamLookup.HasComponent(hitEntity) ||
                     !transformLookup.HasComponent(hitEntity) ||
                     !speedLookup.HasComponent(hitEntity))
