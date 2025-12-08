@@ -16,7 +16,6 @@ partial struct CalcPositionTarget : ISystem
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
-
     }
 
     [BurstCompile]
@@ -37,6 +36,11 @@ partial struct CalcPositionTarget : ISystem
             CollidesWith = 1 << 1,
             GroupIndex = 0
         };
+
+        var config = SystemAPI.GetSingleton<Config>();
+
+        float halfWidth = config.MapSize.x * 0.5f - 10f;
+        float halfHeight = config.MapSize.y * 0.5f - 10f;
 
         foreach (var (transform, rotation, team, sense, timer, entity) in SystemAPI.Query<RefRO<LocalTransform>, RefRW<RotationComponent>, RefRO<TeamComponent>, RefRO<ShipSenseComponent>, RefRW<CooldownTimer>>().WithEntityAccess())
         {
@@ -157,6 +161,10 @@ partial struct CalcPositionTarget : ISystem
             if (hasEnemy.y && allyCounts.y > best) { chosen = s1; best = allyCounts.y; }
             if (hasEnemy.z && allyCounts.z > best) { chosen = s2; best = allyCounts.z; }
             if (hasEnemy.w && allyCounts.w > best) { chosen = s3; best = allyCounts.w; }
+
+
+            chosen.x = math.clamp(chosen.x, -halfWidth, halfWidth);
+            chosen.z = math.clamp(chosen.z, -halfHeight, halfHeight);
 
             rotation.ValueRW.desiredPosition = chosen;
             //Debug.Log("New target: " + rotation.ValueRW.desiredPosition);

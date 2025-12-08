@@ -30,14 +30,8 @@ partial struct CalcAimTarget : ISystem
 
         float dt = SystemAPI.Time.DeltaTime;
 
-        foreach (var (transform, rotation, team, sense, toWorld, timer, Aim) in SystemAPI.Query<RefRO<LocalTransform>, RefRW<RotationComponent>, RefRO<TeamComponent>, RefRO<CanonSenseComponent>, RefRO<LocalToWorld>, RefRO<CooldownTimer>, RefRW<Aim>>())
+        foreach (var (transform, rotation, team, sense, toWorld, Aim) in SystemAPI.Query<RefRO<LocalTransform>, RefRW<RotationComponent>, RefRO<TeamComponent>, RefRO<CanonSenseComponent>, RefRO<LocalToWorld>, RefRW<Aim>>())
         {
-            if (timer.ValueRO.TimeLeft > 1f)
-            {
-                Aim.ValueRW.HasTarget = false;
-                rotation.ValueRW.desiredPosition = float3.zero;
-                continue;
-            }
 
             if (Aim.ValueRW.HasTarget)
             {
@@ -45,10 +39,10 @@ partial struct CalcAimTarget : ISystem
                 continue;
             }
 
-            Aim.ValueRW.TimeLeft -= dt;
-            if (Aim.ValueRW.TimeLeft > 0f)
+            Aim.ValueRW.RayCastTimeLeft -= dt;
+            if (Aim.ValueRW.RayCastTimeLeft > 0f)
                 continue;
-            Aim.ValueRW.TimeLeft = Aim.ValueRW.Interval;
+            Aim.ValueRW.RayCastTimeLeft = Aim.ValueRW.RayCastInterval;
 
             float3 pos = toWorld.ValueRO.Position;
             float3 forward = toWorld.ValueRO.Forward;
@@ -68,6 +62,7 @@ partial struct CalcAimTarget : ISystem
                     !transformLookup.HasComponent(hitEntity) ||
                     !speedLookup.HasComponent(hitEntity))
                 {
+                    Aim.ValueRW.HasTarget = false;
                     rotation.ValueRW.desiredPosition = bestTarget;
                     continue;
                 }
@@ -91,12 +86,14 @@ partial struct CalcAimTarget : ISystem
                 {
                     float3 moveDir = otherTransform.Forward();
                     float3 targetVel = moveDir * speed.speed;
-                    float timeToHit = dist / projSpeed;
+                    float timeToHit = dist / projSpeed + Aim.ValueRO.ShootWarmupTime;
                     float3 predictedPos = otherTransform.Position + targetVel * timeToHit;
                     bestTarget = predictedPos;
 
                     Aim.ValueRW.HasTarget = true;
                     Aim.ValueRW.TargetPosition = bestTarget;
+
+                    Aim.ValueRW.ShootTimeLeft = Aim.ValueRO.ShootWarmupTime;
                 }
             }
 

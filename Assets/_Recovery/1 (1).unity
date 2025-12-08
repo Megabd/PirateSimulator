@@ -150,11 +150,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ConfigAuthoring
   ShipPrefab: {fileID: 5593820278633140092, guid: 2704fa2785070c34cb80c55704d7147e, type: 3}
   CannonBallPrefab: {fileID: 8669331111841744554, guid: f90f72ea415f4e64fa35084419c90535, type: 3}
-  SeaPrefab: {fileID: 1985540441516581328, guid: b2eac37d9afc5bd4a937d69ede33e7bf, type: 3}
   ShipCount: 5000
-  MapSize:
-    x: 1000
-    y: 1000
 --- !u!4 &1409913257
 Transform:
   m_ObjectHideFlags: 0

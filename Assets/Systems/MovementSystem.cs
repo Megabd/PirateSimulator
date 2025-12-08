@@ -32,8 +32,6 @@ partial struct MovementSystem : ISystem
             //transform.ValueRW.Position.z += (upVector.z * SpeedComponent.ValueRO.speed + WindComponent.ValueRO.windDirection.y) * dt;  
             //Debug.Log("helo?");
 
-
-            //baldur kan "save keystrokes" her, suck ma dick
             float3 upVector = transform.ValueRO.Forward();
 
             float2 forwardXZ = math.normalizesafe(new float2(upVector.x, upVector.z));
