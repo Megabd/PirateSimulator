@@ -3,6 +3,7 @@ using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Physics;
 using Unity.Transforms;
+using UnityEngine;
 
 partial struct CalcAimTarget : ISystem
 {
@@ -50,9 +51,8 @@ partial struct CalcAimTarget : ISystem
             Aim.ValueRW.TimeLeft = Aim.ValueRW.Interval;
 
             float3 pos = toWorld.ValueRO.Position;
-            float3 forward = transform.ValueRO.Forward();
+            float3 forward = toWorld.ValueRO.Forward;
             float3 bestTarget = float3.zero;
-
             RaycastInput rayInput = new RaycastInput
             {
                 Start = pos,

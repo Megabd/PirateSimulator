@@ -16,14 +16,14 @@ public class CannonAuthoring : MonoBehaviour
             AddComponent(entity, new RotationComponent
             {
                 startRotation = startRot,
-                turnSpeed = 60.0f,
+                turnSpeed = 120.0f,
                 desiredPosition = float3.zero,
                 maxTurnAngle = 60.0f
             });
 
             AddComponent(entity, new TeamComponent { redTeam = true });
             AddComponent(entity, new CooldownTimer { TimeLeft = 1.0f, MinSecs = 1.0f, MaxSecs = 3.0f, Seed = 1 });
-            AddComponent(entity, new CanonSenseComponent { senseDistance = 10.0f, cannonballSpeed = 3.0f });
+            AddComponent(entity, new CanonSenseComponent { senseDistance = 20.0f, cannonballSpeed = 3.0f });
             AddComponent(entity, new PrevPosComponent { PrePos = float3.zero });
             AddComponent(entity, new Aim { TimeLeft = 0.1f, Interval = 0.1f, HasTarget = false, TargetPosition = float3.zero });
         }
