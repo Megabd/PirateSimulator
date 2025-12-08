@@ -15,53 +15,73 @@ partial struct RotationSystem : ISystem
         float3 up = math.up();
         float deltaTime = SystemAPI.Time.DeltaTime;
 
-        foreach (var (transform, rotation, worldPos)
-                 in SystemAPI.Query<RefRW<LocalTransform>, RefRO<RotationComponent>, RefRO<LocalToWorld>>())
+        var config = SystemAPI.GetSingleton<Config>();
+
+        if (config.ScheduleParallel)
         {
-            var lt = transform.ValueRO;
-            quaternion startRot = rotation.ValueRO.startRotation;
-            float maxAngle = rotation.ValueRO.maxTurnAngle;   // max degrees from startRot
-            float turnSpeed = rotation.ValueRO.turnSpeed;     // max degrees per second
-
-            float3 toTarget = rotation.ValueRO.desiredPosition - worldPos.ValueRO.Position;
-            float lenSq = math.lengthsq(toTarget);
-            // No target if desiredPosition == current position
-            bool hasTarget = lenSq > 1e-6f;
-
-            // Rotation to desired position with no limits
-            quaternion goalRot;
-
-            if ((rotation.ValueRO.desiredPosition.x == 0 && rotation.ValueRO.desiredPosition.y == 0 && rotation.ValueRO.desiredPosition.z == 0))
+            new RotationJob
             {
-                hasTarget = false;
-            }
+                deltaTime = deltaTime
+            }.ScheduleParallel();
+        }
 
-            if (hasTarget)
+        else if (config.Schedule)
+        {
+            new RotationJob
             {
-                float3 dir = toTarget * math.rsqrt(lenSq); // normalized
-                float2 flat = new float2(toTarget.x, toTarget.z);
-                float targetYaw = math.atan2(flat.x, flat.y);
-                quaternion yaw = quaternion.RotateY(targetYaw);
-                goalRot = yaw;
+                deltaTime = deltaTime
+            }.Schedule();
+        }
 
-            }
-            else
+        else {
+            foreach (var (transform, rotation, worldPos)
+                    in SystemAPI.Query<RefRW<LocalTransform>, RefRO<RotationComponent>, RefRO<LocalToWorld>>())
             {
-                // No target -> rotate back toward starting rotation
-                //Debug.Log("yes");
-                goalRot = startRot;
+                var lt = transform.ValueRO;
+                quaternion startRot = rotation.ValueRO.startRotation;
+                float maxAngle = rotation.ValueRO.maxTurnAngle;   // max degrees from startRot
+                float turnSpeed = rotation.ValueRO.turnSpeed;     // max degrees per second
+
+                float3 toTarget = rotation.ValueRO.desiredPosition - worldPos.ValueRO.Position;
+                float lenSq = math.lengthsq(toTarget);
+                // No target if desiredPosition == current position
+                bool hasTarget = lenSq > 1e-6f;
+
+                // Rotation to desired position with no limits
+                quaternion goalRot;
+
+                if ((rotation.ValueRO.desiredPosition.x == 0 && rotation.ValueRO.desiredPosition.y == 0 && rotation.ValueRO.desiredPosition.z == 0))
+                {
+                    hasTarget = false;
+                }
+
+                if (hasTarget)
+                {
+                    float3 dir = toTarget * math.rsqrt(lenSq); // normalized
+                    float2 flat = new float2(toTarget.x, toTarget.z);
+                    float targetYaw = math.atan2(flat.x, flat.y);
+                    quaternion yaw = quaternion.RotateY(targetYaw);
+                    goalRot = yaw;
+
+                }
+                else
+                {
+                    // No target -> rotate back toward starting rotation
+                    //Debug.Log("yes");
+                    goalRot = startRot;
+                }
+
+                lt.Rotation = RotateLimited(
+                    currentRot: lt.Rotation,
+                    targetRot: goalRot,
+                    startRot: startRot,
+                    maxAngle: maxAngle,
+                    turnSpeed: turnSpeed,
+                    deltaTime: deltaTime
+                );
+
+                transform.ValueRW.Rotation = lt.Rotation;
             }
-
-            lt.Rotation = RotateLimited(
-                currentRot: lt.Rotation,
-                targetRot: goalRot,
-                startRot: startRot,
-                maxAngle: maxAngle,
-                turnSpeed: turnSpeed,
-                deltaTime: deltaTime
-            );
-
-            transform.ValueRW.Rotation = lt.Rotation;
         }
     }
 
@@ -106,3 +126,96 @@ partial struct RotationSystem : ISystem
     [BurstCompile]
     public void OnDestroy(ref SystemState state) { }
 }
+
+
+
+[BurstCompile]
+public partial struct RotationJob : IJobEntity
+{
+    public float deltaTime;
+    void Execute(Entity e, ref LocalTransform transform,  ref RotationComponent rotation, ref LocalToWorld worldPos)
+    {
+        var lt = transform;
+            quaternion startRot = rotation.startRotation;
+            float maxAngle = rotation.maxTurnAngle;   // max degrees from startRot
+            float turnSpeed = rotation.turnSpeed;     // max degrees per second
+
+            float3 toTarget = rotation.desiredPosition - worldPos.Position;
+            float lenSq = math.lengthsq(toTarget);
+            // No target if desiredPosition == current position
+            bool hasTarget = lenSq > 1e-6f;
+
+            // Rotation to desired position with no limits
+            quaternion goalRot;
+
+            if (rotation.desiredPosition.x == 0 && rotation.desiredPosition.y == 0 && rotation.desiredPosition.z == 0)
+            {
+                hasTarget = false;
+            }
+
+            if (hasTarget)
+            {
+                float3 dir = toTarget * math.rsqrt(lenSq); // normalized
+                float2 flat = new float2(toTarget.x, toTarget.z);
+                float targetYaw = math.atan2(flat.x, flat.y);
+                quaternion yaw = quaternion.RotateY(targetYaw);
+                goalRot = yaw;
+
+            }
+            else
+            {
+                // No target -> rotate back toward starting rotation
+                //Debug.Log("yes");
+                goalRot = startRot;
+            }
+
+            lt.Rotation = RotateLimited(
+                currentRot: lt.Rotation,
+                targetRot: goalRot,
+                startRot: startRot,
+                maxAngle: maxAngle,
+                turnSpeed: turnSpeed,
+                deltaTime: deltaTime
+            );
+
+            transform.Rotation = lt.Rotation;
+    }
+
+    static quaternion RotateLimited(
+        quaternion currentRot,
+        quaternion targetRot,
+        quaternion startRot,
+        float maxAngle,
+        float turnSpeed,
+        float deltaTime)
+    {
+
+        // 1) Clamp to maxAngle cone from startRot (if maxAngle > 0)
+        float fromStart = AngleBetween(startRot, targetRot);
+        if (maxAngle > 0f && fromStart > maxAngle)
+        {
+            float tCone = maxAngle / fromStart;   // 0..1
+            targetRot = math.slerp(startRot, targetRot, tCone);
+        }
+        // 2) Clamp turn speed (deg/sec)
+        float angleToGoal = AngleBetween(currentRot, targetRot);
+        float maxStep = turnSpeed * deltaTime;    // degrees this frame
+
+        if (maxStep > 0f && angleToGoal > maxStep)
+        {
+            float tTurn = maxStep / angleToGoal;  // 0..1
+            return math.slerp(currentRot, targetRot, tTurn);
+        }
+
+        return targetRot;
+    }
+
+    // Angle between two quaternions, in degrees
+    static float AngleBetween(quaternion a, quaternion b)
+    {
+        float dot = math.dot(a.value, b.value);
+        dot = math.clamp(dot, -1f, 1f);
+        return 2f * math.degrees(math.acos(math.abs(dot)));
+    }
+}
+
