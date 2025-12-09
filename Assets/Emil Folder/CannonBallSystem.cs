@@ -37,8 +37,8 @@ public partial struct CannonBallMoveJob : IJobEntity
     {
         xform.Position += ball.Velocity * DeltaTime;
 
-        ball.Lifetime += DeltaTime;
-        if (ball.Lifetime >= 5f)
+        ball.Lifetime -= DeltaTime;
+        if (ball.Lifetime <= 0f)
             ECB.DestroyEntity(e);
     }
 }
