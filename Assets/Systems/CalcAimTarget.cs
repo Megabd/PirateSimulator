@@ -43,6 +43,7 @@ partial struct CalcAimTarget : ISystem
                 dt = dt,
                 filter = filter,
                 physicsWorld = physicsWorld,
+                transformLookup = transformLookup,
                 teamLookup = teamLookup,
                 speedLookup = speedLookup
 
@@ -56,6 +57,7 @@ partial struct CalcAimTarget : ISystem
                 dt = dt,
                 filter = filter,
                 physicsWorld = physicsWorld,
+                transformLookup = transformLookup,
                 teamLookup = teamLookup,
                 speedLookup = speedLookup
 

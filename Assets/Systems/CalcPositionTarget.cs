@@ -42,27 +42,27 @@ partial struct CalcPositionTarget : ISystem
 
         if (config.ScheduleParallel)
         {
-            new CalcPositionTargetJob
+            state.Dependency = new CalcPositionTargetJob
             {
-                
                 dt = dt,
                 filter = filter,
                 physicsWorld = physicsWorld,
                 teamLookup = teamLookup,
                 transformLookup = transformLookup
-            }.ScheduleParallel();
+            }.ScheduleParallel(state.Dependency);
         }
 
         else if (config.Schedule)
         {
-            new CalcPositionTargetJob
+            state.Dependency = new CalcPositionTargetJob
             {
                 dt = dt,
                 filter = filter,
                 physicsWorld = physicsWorld,
                 teamLookup = teamLookup,
                 transformLookup = transformLookup
-            }.Schedule();
+            }.Schedule(state.Dependency);
+
         }
 
         else {
