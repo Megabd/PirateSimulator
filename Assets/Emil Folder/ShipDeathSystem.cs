@@ -15,14 +15,46 @@ public partial struct ShipDeathSystem : ISystem
     {
         var ecbSingleton = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
         var ecb = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged);
+        var config = SystemAPI.GetSingleton<Config>();
 
-        foreach (var (health, entity)
-                 in SystemAPI.Query<RefRO<HealthComponent>>().WithEntityAccess())
-        {
-            if (health.ValueRO.health <= 0)
+        if (config.ScheduleParallel){
+            new ShipDeathJob
             {
-                ecb.DestroyEntity(entity);
+                ECB = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter(),
+            }.ScheduleParallel();
+        }
+
+        else if (config.Schedule)
+        {
+            new ShipDeathJob
+            {
+                ECB = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter(),
+            }.Schedule(); // you can upgrade to ScheduleParallel later
+        }
+        else
+        {
+            foreach (var (health, entity)
+                    in SystemAPI.Query<RefRO<HealthComponent>>().WithEntityAccess())
+            {
+                if (health.ValueRO.health <= 0)
+                {
+                    ecb.DestroyEntity(entity);
+                }
             }
         }
+    }
+}
+
+
+[BurstCompile]
+public partial struct ShipDeathJob : IJobEntity
+{
+    public EntityCommandBuffer.ParallelWriter ECB;
+    void Execute([EntityIndexInQuery] int entityInQueryIndex, Entity e, ref HealthComponent health)
+    {
+        if (health.health <= 0)
+            {
+                ECB.DestroyEntity(entityInQueryIndex, e);
+            }
     }
 }
