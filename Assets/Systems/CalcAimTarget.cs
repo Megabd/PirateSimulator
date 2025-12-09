@@ -43,8 +43,8 @@ partial struct CalcAimTarget : ISystem
                 dt = dt,
                 filter = filter,
                 physicsWorld = physicsWorld,
-                teamLookup = teamLookup,
                 transformLookup = transformLookup,
+                teamLookup = teamLookup,
                 speedLookup = speedLookup
 
             }.ScheduleParallel();
@@ -57,16 +57,15 @@ partial struct CalcAimTarget : ISystem
                 dt = dt,
                 filter = filter,
                 physicsWorld = physicsWorld,
-                teamLookup = teamLookup,
                 transformLookup = transformLookup,
+                teamLookup = teamLookup,
                 speedLookup = speedLookup
 
             }.Schedule();
         }
 
         else {
-
-        foreach (var (transform, rotation, team, sense, toWorld, Aim) in SystemAPI.Query<RefRO<LocalTransform>, RefRW<RotationComponent>, RefRO<TeamComponent>, RefRO<CanonSenseComponent>, RefRO<LocalToWorld>, RefRW<Aim>>())
+        foreach (var (rotation, team, sense, toWorld, Aim) in SystemAPI.Query<RefRW<RotationComponent>, RefRO<TeamComponent>, RefRO<CanonSenseComponent>, RefRO<LocalToWorld>, RefRW<Aim>>())
         {
 
             if (Aim.ValueRW.HasTarget)
@@ -94,9 +93,7 @@ partial struct CalcAimTarget : ISystem
             {
                 var hitEntity = physicsWorld.Bodies[hit.RigidBodyIndex].Entity;
 
-                if (!teamLookup.HasComponent(hitEntity) ||
-                    !transformLookup.HasComponent(hitEntity) ||
-                    !speedLookup.HasComponent(hitEntity))
+                if (!speedLookup.HasComponent(hitEntity))
                 {
                     Aim.ValueRW.HasTarget = false;
                     rotation.ValueRW.desiredPosition = bestTarget;
@@ -192,9 +189,7 @@ public partial struct CalcAimTargetJob : IJobEntity
         {
             var hitEntity = physicsWorld.Bodies[hit.RigidBodyIndex].Entity;
 
-            if (!teamLookup.HasComponent(hitEntity) ||
-                !transformLookup.HasComponent(hitEntity) ||
-                !speedLookup.HasComponent(hitEntity))
+            if (!speedLookup.HasComponent(hitEntity))
             {
                 Aim.HasTarget = false;
                 rotation.desiredPosition = bestTarget;

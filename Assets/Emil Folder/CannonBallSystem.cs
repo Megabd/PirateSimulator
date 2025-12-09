@@ -2,6 +2,8 @@ using Unity.Burst;
 using Unity.Entities;
 using Unity.Transforms;
 using Unity.Physics.Systems;
+using System.ComponentModel;
+using Unity.Collections;
 
 [BurstCompile]
 [UpdateInGroup(typeof(FixedStepSimulationSystemGroup))]
@@ -17,28 +19,54 @@ public partial struct CannonBallSystem : ISystem
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
+        var DeltaTime = SystemAPI.Time.DeltaTime;
         var ecbSingleton = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
+        var config = SystemAPI.GetSingleton<Config>();
 
-        new CannonBallMoveJob
+        if (config.ScheduleParallel){
+            new CannonBallMoveJob
+            {
+                ECB = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter(),
+                DeltaTime = SystemAPI.Time.DeltaTime
+            }.ScheduleParallel();
+        }
+
+        else if (config.Schedule)
         {
-            ECB = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged),
-            DeltaTime = SystemAPI.Time.DeltaTime
-        }.Schedule(); // you can upgrade to ScheduleParallel later
+            new CannonBallMoveJob
+            {
+                ECB = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter(),
+                DeltaTime = SystemAPI.Time.DeltaTime
+            }.Schedule(); // you can upgrade to ScheduleParallel later
+        }
+        else
+        {
+            var ECB = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged);
+            foreach (var (ball, transform, entity)
+                    in SystemAPI.Query<RefRW<CannonBalls>, RefRW<LocalTransform>>().WithEntityAccess())
+            {
+            transform.ValueRW.Position += ball.ValueRO.Velocity * DeltaTime;
+
+            ball.ValueRW.Lifetime -= DeltaTime;
+            if (ball.ValueRO.Lifetime <= 0f)
+                ECB.DestroyEntity(entity);
+        }
     }
+}
 }
 
 [BurstCompile]
 public partial struct CannonBallMoveJob : IJobEntity
 {
-    public EntityCommandBuffer ECB;
+
+    public EntityCommandBuffer.ParallelWriter ECB;
     public float DeltaTime;
 
-    void Execute(Entity e, ref CannonBalls ball, ref LocalTransform xform)
+    void Execute([EntityIndexInQuery] int entityInQueryIndex, Entity e, ref CannonBalls ball, ref LocalTransform xform)
     {
         xform.Position += ball.Velocity * DeltaTime;
-
         ball.Lifetime -= DeltaTime;
         if (ball.Lifetime <= 0f)
-            ECB.DestroyEntity(e);
+            ECB.DestroyEntity(entityInQueryIndex, e);
     }
 }
