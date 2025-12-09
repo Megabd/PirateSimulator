@@ -22,15 +22,15 @@ partial struct ShootingBallSystem : ISystem
         float dt = SystemAPI.Time.DeltaTime;
         foreach (var (transform,
              rotation,
-             coolDownTimer,
              canonSense,
+             aim,
              worldPos,
              prevPos)
          in SystemAPI.Query<
                 RefRO<LocalTransform>,
                 RefRW<RotationComponent>,
-                RefRW<CooldownTimer>,
                 RefRO<CanonSenseComponent>,
+                RefRW<Aim>,
                 RefRO<LocalToWorld>,
                 RefRW<PrevPosComponent>>())
         {
@@ -40,33 +40,40 @@ partial struct ShootingBallSystem : ISystem
             float3 cannonVel = (currentPos - prevPos.ValueRO.PrePos) / dt; // world-space velocity
             prevPos.ValueRW.PrePos = currentPos; // store for next frame
 
-            coolDownTimer.ValueRW.TimeLeft -= dt;
-            if (coolDownTimer.ValueRW.TimeLeft > 0f) continue;
-            if (rotation.ValueRO.desiredPosition.x == 0 && rotation.ValueRO.desiredPosition.y == 0 && rotation.ValueRO.desiredPosition.z == 0) continue;
+            // No target, no warmup, no shot
+            if (!aim.ValueRO.HasTarget)
+            {
+                aim.ValueRW.ShootTimeLeft = 0f;
+                continue;
+            }
 
-            float3 origin = currentPos;
-            float3 dir = math.normalize(worldPos.ValueRO.Forward);
+            // Count down the warmup timer
+            aim.ValueRW.ShootTimeLeft -= dt;
+            if (aim.ValueRW.ShootTimeLeft > 0f)
+            {
+                // still winding up, don't shoot yet
+                continue;
+            }
 
             var ball = em.Instantiate(config.CannonBallPrefab);
 
             // spawn at cannon position
-            ballXform.Position = origin;
+            ballXform.Position = currentPos;
             ballXform.Rotation = transform.ValueRO.Rotation; // local rotation of cannon entity
             em.SetComponentData(ball, ballXform);
 
 
             // ball inherits cannon velocity + its own shooting speed
+            float3 dir = math.normalize(worldPos.ValueRO.Forward);
             em.SetComponentData(ball, new CannonBalls
             {
-                Velocity = cannonVel + dir * 10f,
+                Velocity = cannonVel + dir * canonSense.ValueRO.cannonballSpeed,
                 Lifetime = 0f,
                 Radius = 0.5f //canonball hitbox
             });
 
+            aim.ValueRW.HasTarget = false;
             rotation.ValueRW.desiredPosition = float3.zero;
-
-            // Reset cooldown with randomness
-            coolDownTimer.ValueRW.TimeLeft = rand.NextFloat(coolDownTimer.ValueRW.MinSecs, coolDownTimer.ValueRW.MaxSecs);
         }
 
 

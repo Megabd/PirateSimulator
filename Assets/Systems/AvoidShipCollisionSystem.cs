@@ -29,7 +29,10 @@ partial struct AvoidShipCollisionSystem : ISystem
         };
 
         float dt = SystemAPI.Time.DeltaTime;
+        var config = SystemAPI.GetSingleton<Config>();
 
+        float halfWidth = config.MapSize.x * 0.5f - 10f;
+        float halfHeight = config.MapSize.y * 0.5f - 10f;
         foreach (var (transform, rotation, sense, timer, avoidance, entity)
             in SystemAPI.Query<
                 RefRO<LocalTransform>,
@@ -133,6 +136,8 @@ partial struct AvoidShipCollisionSystem : ISystem
 
             if (avoidance.ValueRW.Active)
             {
+                avoidance.ValueRW.Target.x = math.clamp(avoidance.ValueRW.Target.x, -halfWidth, halfWidth);
+                avoidance.ValueRW.Target.z = math.clamp(avoidance.ValueRW.Target.z, -halfHeight, halfHeight);
                 rotation.ValueRW.desiredPosition = avoidance.ValueRW.Target;
             }
         }
