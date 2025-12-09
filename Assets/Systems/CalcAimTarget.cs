@@ -160,7 +160,7 @@ public partial struct CalcAimTargetJob : IJobEntity
     [ReadOnly]
     public ComponentLookup<SpeedComponent> speedLookup;
 
-    void Execute(Entity e,  ref RotationComponent rotation, ref CanonSenseComponent sense, ref LocalToWorld toWorld, ref CooldownTimer timer, ref Aim Aim)
+    void Execute(Entity e,  ref RotationComponent rotation, ref CanonSenseComponent sense, ref LocalToWorld toWorld, ref Aim Aim)
     {
         if (Aim.HasTarget)
             {

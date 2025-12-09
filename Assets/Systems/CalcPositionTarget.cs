@@ -234,101 +234,100 @@ public partial struct CalcPositionTargetJob : IJobEntity
     void Execute(Entity e,  ref RotationComponent rotation, ref ShipSenseComponent sense, ref LocalToWorld toWorld, ref CooldownTimer timer)
     {
         timer.TimeLeft -= dt;
-        if (timer.TimeLeft > 0f);
-        else {
-            NativeList<DistanceHit> hits = new NativeList<DistanceHit>(Allocator.Temp);
-            var transform = transformLookup[e];
-            var team = teamLookup[e];
-            float3 pos = transform.Position;
-            float3 currentTarget = rotation.desiredPosition;
+        if (timer.TimeLeft > 0f)
+        {
+            return;
+        }
+        NativeList<DistanceHit> hits = new NativeList<DistanceHit>(Allocator.Temp);
+        var transform = transformLookup[e];
+        var team = teamLookup[e];
+        float3 pos = transform.Position;
+        float3 currentTarget = rotation.desiredPosition;
 
-            //baldur kode
-            float3 fwd = math.normalize(new float3(transform.Forward().x, 0, transform.Forward().z));
-            float3 right = math.normalize(math.cross(new float3(0, 1, 0), fwd));
+        //baldur kode
+        float3 fwd = math.normalize(new float3(transform.Forward().x, 0, transform.Forward().z));
+        float3 right = math.normalize(math.cross(new float3(0, 1, 0), fwd));
 
-            float offset = sense.sampleOffset;
-            float r = sense.sampleRadius;
+        float offset = sense.sampleOffset;
+        float r = sense.sampleRadius;
 
-            float3 s0 = pos + fwd * offset; // forward
-            float3 s1 = pos - right * offset; // left
-            float3 s2 = pos + right * offset; // right
-            float3 s3 = pos - fwd * offset; // back
+        float3 s0 = pos + fwd * offset; // forward
+        float3 s1 = pos - right * offset; // left
+        float3 s2 = pos + right * offset; // right
+        float3 s3 = pos - fwd * offset; // back
 
-            int4 allyCounts = 0;
-            bool4 hasEnemy = false;
+        int4 allyCounts = 0;
+        bool4 hasEnemy = false;
 
-            // one big circle
-            float bigRadius = offset + r;
+        // one big circle
+        float bigRadius = offset + r;
 
-            var input = new PointDistanceInput
-            {
-                Position = pos,
-                MaxDistance = bigRadius,
-                Filter = filter
-            };
-            hits.Clear();
+        var input = new PointDistanceInput
+        {
+            Position = pos,
+            MaxDistance = bigRadius,
+            Filter = filter
+        };
+        hits.Clear();
             
-            if (physicsWorld.CalculateDistance(input, ref hits))
+        if (physicsWorld.CalculateDistance(input, ref hits))
+        {
+            for (int i = 0; i < hits.Length; i++)
             {
-                for (int i = 0; i < hits.Length; i++)
+                var body  = physicsWorld.Bodies[hits[i].RigidBodyIndex];
+                Entity other = body.Entity;
+                
+                if (other == e)
                 {
-                    var body  = physicsWorld.Bodies[hits[i].RigidBodyIndex];
-                    Entity other = body.Entity;
-                    
-                    if (other == e)
-                    {
-                        
-                    }
-
-                    else if (!transformLookup.HasComponent(other) || !teamLookup.HasComponent(other))
-                    {
-                        
-                    }
-                    else
-                    {
-                        var otherTransform = transformLookup[other];
-                        var otherTeam = teamLookup[other];
-
-                        float3 p = otherTransform.Position;
-
-                        // same sample logic as before
-                        float3 d0 = p - s0;
-                        bool3 check = d0 <= float3.zero;
-                        if (check.x && check.y && check.z)
-                        {
-                            bool ally = otherTeam.redTeam == team.redTeam;
-                            allyCounts.x += ally ? 1 : -1;
-                            hasEnemy.x |= !ally;
-                        }
-
-                        float3 d1 = p - s1;
-                        bool3 check1 = d1 <= float3.zero;
-                        if (check1.x && check1.y && check1.z)
-                        {
-                            bool ally = otherTeam.redTeam == team.redTeam;
-                            allyCounts.y += ally ? 1 : -1;
-                            hasEnemy.y |= !ally;
-                        }
-
-                        float3 d2 = p - s2;
-                        bool3 check2 = d2 <= float3.zero;
-                        if (check2.x && check2.y && check2.z)
-                        {
-                            bool ally = otherTeam.redTeam == team.redTeam;
-                            allyCounts.z += ally ? 1 : -1;
-                            hasEnemy.z |= !ally;
-                        }
-
-                        float3 d3 = p - s3;
-                        bool3 check3 = d3 <= float3.zero;
-                        if (check3.x && check3.y && check3.z)
-                        {
-                            bool ally = otherTeam.redTeam == team.redTeam;
-                            allyCounts.w += ally ? 1 : -1;
-                            hasEnemy.w |= !ally;
-                        }
-                    }
+                    return;
                 }
+
+                if (!transformLookup.HasComponent(other) || !teamLookup.HasComponent(other))
+                {
+                    return;
+                }
+                var otherTransform = transformLookup[other];
+                var otherTeam = teamLookup[other];
+
+                float3 p = otherTransform.Position;
+
+                // same sample logic as before
+                float3 d0 = p - s0;
+                bool3 check = d0 <= float3.zero;
+                if (check.x && check.y && check.z)
+                {
+                    bool ally = otherTeam.redTeam == team.redTeam;
+                    allyCounts.x += ally ? 1 : -1;
+                    hasEnemy.x |= !ally;
+                }
+
+                float3 d1 = p - s1;
+                bool3 check1 = d1 <= float3.zero;
+                if (check1.x && check1.y && check1.z)
+                {
+                    bool ally = otherTeam.redTeam == team.redTeam;
+                    allyCounts.y += ally ? 1 : -1;
+                    hasEnemy.y |= !ally;
+                }
+
+                float3 d2 = p - s2;
+                bool3 check2 = d2 <= float3.zero;
+                if (check2.x && check2.y && check2.z)
+                {
+                    bool ally = otherTeam.redTeam == team.redTeam;
+                    allyCounts.z += ally ? 1 : -1;
+                    hasEnemy.z |= !ally;
+                }
+
+                float3 d3 = p - s3;
+                bool3 check3 = d3 <= float3.zero;
+                if (check3.x && check3.y && check3.z)
+                {
+                    bool ally = otherTeam.redTeam == team.redTeam;
+                    allyCounts.w += ally ? 1 : -1;
+                    hasEnemy.w |= !ally;
+                }
+            }
                 // choose best direction
                 float3 chosen = s0;
                 int best = -1;
@@ -345,5 +344,4 @@ public partial struct CalcPositionTargetJob : IJobEntity
                 }
                 hits.Dispose();
         }     
-        }
 }

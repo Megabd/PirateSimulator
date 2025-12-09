@@ -17,9 +17,36 @@ partial struct ShootingBallSystem : ISystem
     {
         var em = state.EntityManager;
         var config = SystemAPI.GetSingleton<Config>();
-
+        var ecbSingleton = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>();
+        var ecb = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter();
         var ballXform = em.GetComponentData<LocalTransform>(config.CannonBallPrefab);
         float dt = SystemAPI.Time.DeltaTime;
+
+
+        if (config.ScheduleParallel)
+        {
+            state.Dependency = new ShootingBallJob
+            {
+                dt = dt,
+                config = config,
+                ecb = ecb,
+                ballXform = ballXform
+            }.ScheduleParallel(state.Dependency);
+        }
+
+        else if (config.Schedule)
+        {
+            state.Dependency = new ShootingBallJob
+            {
+                dt = dt,
+                config = config,
+                ecb = ecb,
+                ballXform = ballXform
+            }.Schedule(state.Dependency);
+        }
+
+        else
+        {
         foreach (var (transform,
              rotation,
              canonSense,
@@ -75,6 +102,7 @@ partial struct ShootingBallSystem : ISystem
             aim.ValueRW.HasTarget = false;
             rotation.ValueRW.desiredPosition = float3.zero;
         }
+        }
 
 
     }
@@ -82,4 +110,57 @@ partial struct ShootingBallSystem : ISystem
 
     [BurstCompile]
     public void OnDestroy(ref SystemState state) { }
+}
+
+
+[BurstCompile]
+public partial struct ShootingBallJob : IJobEntity
+{
+    public float dt;
+
+    public Config config;
+
+    public EntityCommandBuffer.ParallelWriter ecb;
+    public LocalTransform ballXform;
+    void Execute([EntityIndexInQuery] int entityInQueryIndex, Entity e, ref LocalTransform transform, ref RotationComponent rotation, ref CanonSenseComponent canonSense, ref Aim aim, ref LocalToWorld worldPos, ref PrevPosComponent prevPos)
+    {
+        float3 currentPos = worldPos.Position;
+            float3 cannonVel = (currentPos - prevPos.PrePos) / dt; // world-space velocity
+            prevPos.PrePos = currentPos; // store for next frame
+
+            // No target, no warmup, no shot
+            if (!aim.HasTarget)
+            {
+                aim.ShootTimeLeft = 0f;
+                return;
+            }
+
+            // Count down the warmup timer
+            aim.ShootTimeLeft -= dt;
+            if (aim.ShootTimeLeft > 0f)
+            {
+                // still winding up, don't shoot yet
+                return;
+            }
+
+            var ball = ecb.Instantiate(entityInQueryIndex, config.CannonBallPrefab);
+
+            // spawn at cannon position
+            ballXform.Position = currentPos;
+            ballXform.Rotation = transform.Rotation; // local rotation of cannon entity
+            ecb.SetComponent(entityInQueryIndex, ball, ballXform);
+
+
+            // ball inherits cannon velocity + its own shooting speed
+            float3 dir = math.normalize(worldPos.Forward);
+            ecb.SetComponent(entityInQueryIndex, ball, new CannonBalls
+            {
+                Velocity = cannonVel + dir * canonSense.cannonballSpeed,
+                Lifetime = 0f,
+                Radius = 0.5f //canonball hitbox
+            });
+
+            aim.HasTarget = false;
+            rotation.desiredPosition = float3.zero;
+    }
 }

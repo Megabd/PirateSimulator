@@ -190,7 +190,7 @@ public partial struct RotationJob : IJobEntity
         }
         else
         {
-                // no target -> just go back to start rotation in world space
+            // no target -> just go back to start rotation in world space
             // startRot is local, so worldStart = parentWorldRot * startRot
             worldGoalRot = math.mul(parentWorldRot, startRot);
         }
