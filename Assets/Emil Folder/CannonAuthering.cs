@@ -22,9 +22,9 @@ public class CannonAuthoring : MonoBehaviour
             });
 
             AddComponent(entity, new TeamComponent { redTeam = true });
-            AddComponent(entity, new CanonSenseComponent { senseDistance = 20.0f, cannonballSpeed = 10.0f });
             AddComponent(entity, new PrevPosComponent { PrePos = float3.zero });
-            AddComponent(entity, new Aim { RayCastTimeLeft = 1f, RayCastInterval = 1f, HasTarget = false, TargetPosition = float3.zero, ShootWarmupTime = 0.5f, ShootTimeLeft = 0.5f });
+
+            AddComponent(entity, new Aim { RayCastTimeLeft = 1f, RayCastInterval = 1f, HasTarget = false, TargetPosition = float3.zero, ShootTimeLeft = 0.5f });
         }
     }
 }

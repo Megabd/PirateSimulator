@@ -49,14 +49,12 @@ partial struct ShootingBallSystem : ISystem
         {
         foreach (var (transform,
              rotation,
-             canonSense,
              aim,
              worldPos,
              prevPos)
          in SystemAPI.Query<
                 RefRO<LocalTransform>,
                 RefRW<RotationComponent>,
-                RefRO<CanonSenseComponent>,
                 RefRW<Aim>,
                 RefRO<LocalToWorld>,
                 RefRW<PrevPosComponent>>())
@@ -94,8 +92,8 @@ partial struct ShootingBallSystem : ISystem
             float3 dir = math.normalize(worldPos.ValueRO.Forward);
             em.SetComponentData(ball, new CannonBalls
             {
-                Velocity = cannonVel + dir * canonSense.ValueRO.cannonballSpeed,
-                Lifetime = 5f,
+                Velocity = cannonVel + dir * CannonConfig.CannonballSpeed,
+                Lifetime = CannonConfig.CannonballLifeTime,
                 Radius = 0.5f //canonball hitbox
             });
 
@@ -122,7 +120,7 @@ public partial struct ShootingBallJob : IJobEntity
 
     public EntityCommandBuffer.ParallelWriter ecb;
     public LocalTransform ballXform;
-    void Execute([EntityIndexInQuery] int entityInQueryIndex, Entity e, ref LocalTransform transform, ref RotationComponent rotation, ref CanonSenseComponent canonSense, ref Aim aim, ref LocalToWorld worldPos, ref PrevPosComponent prevPos)
+    void Execute([EntityIndexInQuery] int entityInQueryIndex, Entity e, ref LocalTransform transform, ref RotationComponent rotation, ref Aim aim, ref LocalToWorld worldPos, ref PrevPosComponent prevPos)
     {
         float3 currentPos = worldPos.Position;
             float3 cannonVel = (currentPos - prevPos.PrePos) / dt; // world-space velocity
@@ -155,8 +153,8 @@ public partial struct ShootingBallJob : IJobEntity
             float3 dir = math.normalize(worldPos.Forward);
             ecb.SetComponent(entityInQueryIndex, ball, new CannonBalls
             {
-                Velocity = cannonVel + dir * canonSense.cannonballSpeed,
-                Lifetime = 0f,
+                Velocity = cannonVel + dir * CannonConfig.CannonballSpeed,
+                Lifetime = CannonConfig.CannonballLifeTime,
                 Radius = 0.5f //canonball hitbox
             });
 

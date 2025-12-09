@@ -3,10 +3,6 @@ using Unity.Burst;
 using Unity.Transforms;
 using Unity.Mathematics;
 
-public struct SpeedComponent : IComponentData
-{
-    public float speed;
-}
 
 public struct RotationComponent : IComponentData
 {
@@ -34,26 +30,12 @@ public struct ShipSenseComponent : IComponentData
     public float sampleRadius;
 }
 
-public struct CanonSenseComponent : IComponentData
-{
-    public float senseDistance;
-    public float cannonballSpeed;
-
-}
-
 public struct CooldownTimer : IComponentData
 {
     public float TimeLeft;
     public float MinSecs;
     public float MaxSecs;
     public uint Seed;
-}
-
-public struct CannonComponent : IComponentData
-{
-    public Entity projectilePrefab;
-    public float projectileSpeed;
-    public float lifeTime;
 }
 
 public struct PrevPosComponent : IComponentData
@@ -77,8 +59,6 @@ public struct Aim : IComponentData
 {
     public float RayCastTimeLeft;
     public float RayCastInterval;
-
-    public float ShootWarmupTime;     // e.g. 0.5f (constant per cannon)
     public float ShootTimeLeft; // counts down after target acquired
 
     public bool HasTarget; 

@@ -50,13 +50,14 @@ partial struct RotationSystem : ISystem
                     in SystemAPI.Query<RefRW<LocalTransform>, RefRO<RotationComponent>, RefRO<LocalToWorld>>().WithEntityAccess())
             {
                 var lt = transform.ValueRO;
-                quaternion startRot = rotation.ValueRO.startRotation;   // local-space default
-                float maxAngle = rotation.ValueRO.maxTurnAngle;
-                float turnSpeed = rotation.ValueRO.turnSpeed;
-                float3 toTarget = rotation.ValueRO.desiredPosition - worldPos.ValueRO.Position;
+                var rot = rotation.ValueRO;
+                quaternion startRot = rot.startRotation;   // local-space default
+                float maxAngle = rot.maxTurnAngle;
+                float turnSpeed = rot.turnSpeed;
+                float3 toTarget = rot.desiredPosition - worldPos.ValueRO.Position;
                 float lenSq = math.lengthsq(toTarget);
                 bool hasTarget = lenSq > 1e-6f &&
-                             !math.all(rotation.ValueRO.desiredPosition == float3.zero);
+                             !math.all(rot.desiredPosition == float3.zero);
 
                 // 1) Figure out the parent's world rotation (or identity if no parent)
                 quaternion parentWorldRot = quaternion.identity;

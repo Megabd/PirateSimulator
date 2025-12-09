@@ -39,7 +39,7 @@ partial struct MovementSystem : ISystem
 
         else
         {
-            foreach (var (transform, SpeedComponent, WindComponent, velocity) in SystemAPI.Query<RefRO<LocalTransform>, RefRO<SpeedComponent>, RefRO<WindComponent>, RefRW<PhysicsVelocity>>())
+            foreach (var (transform, WindComponent, velocity) in SystemAPI.Query<RefRO<LocalTransform>, RefRO<WindComponent>, RefRW<PhysicsVelocity>>())
         {
 
 
@@ -59,7 +59,7 @@ partial struct MovementSystem : ISystem
 
             float2 windXZ = WindComponent.ValueRO.windDirection;
 
-            float2 desiredXZ = forwardXZ * SpeedComponent.ValueRO.speed + windXZ;
+            float2 desiredXZ = forwardXZ * ShipConfig.ShipSpeed + windXZ;
 
             var v = velocity.ValueRW;
 
@@ -87,7 +87,7 @@ partial struct MovementSystem : ISystem
 public partial struct EntityMoveJob : IJobEntity
 {
     public float DeltaTime;
-    void Execute(Entity e, ref LocalTransform transform,  ref SpeedComponent SpeedComponent, ref WindComponent WindComponent, ref PhysicsVelocity velocity)
+    void Execute(Entity e, ref LocalTransform transform, ref WindComponent WindComponent, ref PhysicsVelocity velocity)
     {
         float3 upVector = transform.Forward();
 
@@ -95,7 +95,7 @@ public partial struct EntityMoveJob : IJobEntity
 
         float2 windXZ = WindComponent.windDirection;
 
-        float2 desiredXZ = forwardXZ * SpeedComponent.speed + windXZ;
+        float2 desiredXZ = forwardXZ * ShipConfig.ShipSpeed + windXZ;
 
         var v = velocity;
 

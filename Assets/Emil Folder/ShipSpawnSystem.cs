@@ -31,7 +31,7 @@ public partial struct ShipSpawnSystem : ISystem
         //float halfHeight = config.ShipCount * 0.125f;   // 100 tall
         //float halfWidth = 150f;  // 300 wide
         //float halfHeight = 50;   // 100 tall
-        var rng = Random.CreateFromIndex(1337u);
+        var rng = Unity.Mathematics.Random.CreateFromIndex(1337u);
         uint seed = 1;
         bool team = true;
         for (int i = 0; i < count; i++)
@@ -76,8 +76,9 @@ public partial struct ShipSpawnSystem : ISystem
 
             var cannonBuffer = em.GetBuffer<ShipAuthoring.CannonElement>(entities[i]);
             int j = 0;
+
             // Apply team component to each cannon entity
-            foreach (var ele in cannonBuffer) 
+            foreach (var ele in cannonBuffer)
             {
                 quaternion lol;
                 quaternion test;
@@ -91,16 +92,25 @@ public partial struct ShipSpawnSystem : ISystem
                     test = quaternion.Euler(0, 0f, math.radians(-90f));
                     lol = math.mul(fix, test);
                 }
-                //var cannonLocal = em.GetComponentData<LocalTransform>(ele.Cannon);
 
-                //var entity = GetEntity(ele, TransformUsageFlags.Dynamic);
-                //em.SetComponentData(ele.Cannon, new TeamComponent { redTeam = team });
+                // Set team on the cannon
                 em.SetComponentData(ele.Cannon, new TeamComponent { redTeam = team });
-                //em.SetComponentData(ele.Cannon, new RotationComponent {turnSpeed = 60.0f, desiredPosition = float3.zero, maxTurnAngle = 60.0f, startRotation = cannonLocal.Rotation});
-                //AddComponent(entity, new TeamComponent { redTeam = true });
+
+                // stagger Aim per cannon instance
+                if (em.HasComponent<Aim>(ele.Cannon))
+                {
+                    var aim = em.GetComponentData<Aim>(ele.Cannon);
+
+                    float rand01 = rng.NextFloat();
+                    aim.RayCastTimeLeft = aim.RayCastInterval * rand01;
+
+                    em.SetComponentData(ele.Cannon, aim);
+                }
+
                 j++;
             }
-            seed+=1;
+
+            seed += 1;
             //Debug.Log(team);
         }
 
