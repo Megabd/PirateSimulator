@@ -24,7 +24,7 @@ public class ConfigAuthoring : MonoBehaviour
                 SeaPrefab = GetEntity(authoring.SeaPrefab, TransformUsageFlags.Dynamic),
                 ShipCount = authoring.ShipCount,
                 Schedule = authoring.Schedule,
-                ScheduleParallel = authoring.ScheduleParallel
+                ScheduleParallel = authoring.ScheduleParallel,
                 MapSize = authoring.MapSize,
             });
         }

@@ -162,83 +162,74 @@ public partial struct CalcAimTargetJob : IJobEntity
 
     void Execute(Entity e,  ref RotationComponent rotation, ref CanonSenseComponent sense, ref LocalToWorld toWorld, ref CooldownTimer timer, ref Aim Aim)
     {
-        if (timer.TimeLeft > 1f)
+        if (Aim.HasTarget)
+            {
+                rotation.desiredPosition = Aim.TargetPosition;
+                return;
+            }
+
+        Aim.RayCastTimeLeft -= dt;
+        if (Aim.RayCastTimeLeft > 0f)
+        {
+            return;
+        }
+                
+        Aim.RayCastTimeLeft = Aim.RayCastInterval;
+
+        float3 pos = toWorld.Position;
+        float3 forward = toWorld.Forward;
+        float3 bestTarget = float3.zero;
+        RaycastInput rayInput = new RaycastInput
+        {
+            Start = pos,
+            End = pos + forward * sense.senseDistance,
+            Filter = filter
+        };
+
+        if (physicsWorld.CastRay(rayInput, out Unity.Physics.RaycastHit hit))
+        {
+            var hitEntity = physicsWorld.Bodies[hit.RigidBodyIndex].Entity;
+
+            if (!teamLookup.HasComponent(hitEntity) ||
+                !transformLookup.HasComponent(hitEntity) ||
+                !speedLookup.HasComponent(hitEntity))
             {
                 Aim.HasTarget = false;
-                rotation.desiredPosition = float3.zero;
-            }
-
-        else if (Aim.HasTarget)
-        {
-            rotation.desiredPosition = Aim.TargetPosition;
-        }
-        else {
-
-            Aim.TimeLeft -= dt;
-            if (Aim.TimeLeft > 0f)
-            {
-                
-            }
-            else {
-                Aim.TimeLeft = Aim.Interval;
-
-                float3 pos = toWorld.Position;
-                float3 forward = toWorld.Forward;
-                float3 bestTarget = float3.zero;
-                RaycastInput rayInput = new RaycastInput
-                {
-                    Start = pos,
-                    End = pos + forward * sense.senseDistance,
-                    Filter = filter
-                };
-
-                if (physicsWorld.CastRay(rayInput, out Unity.Physics.RaycastHit hit))
-                {
-                    var hitEntity = physicsWorld.Bodies[hit.RigidBodyIndex].Entity;
-
-                    if (!teamLookup.HasComponent(hitEntity) ||
-                        !transformLookup.HasComponent(hitEntity) ||
-                        !speedLookup.HasComponent(hitEntity))
-                    {
-                        rotation.desiredPosition = bestTarget;
-                    }
-
-                    else
-                    {
-                        var teamComp = teamLookup[hitEntity];
-                        var team = teamLookup[e];
-                        if (teamComp.redTeam == team.redTeam)
-                        {
-                            rotation.desiredPosition = bestTarget;
-                        }
-                        else
-                        {
-                            var otherTransform = transformLookup[hitEntity];
-                            var speed = speedLookup[hitEntity];
-
-                            float projSpeed = sense.cannonballSpeed;
-                            float3 toTarget = otherTransform.Position - pos;
-                            float dist = math.length(toTarget);
-
-                            if (projSpeed > 0f && dist > 0f)
-                            {
-                                float3 moveDir = otherTransform.Forward();
-                                float3 targetVel = moveDir * speed.speed;
-                                float timeToHit = dist / projSpeed;
-                                float3 predictedPos = otherTransform.Position + targetVel * timeToHit;
-                                bestTarget = predictedPos;
-
-                                Aim.HasTarget = true;
-                                Aim.TargetPosition = bestTarget;
-                            }
-                        }
-
-                    
-                    }
-                }
-
                 rotation.desiredPosition = bestTarget;
+                return;
+            }
+
+            var teamComp = teamLookup[hitEntity];
+            var team = teamLookup[e];
+
+            if (teamComp.redTeam == team.redTeam)
+            {
+                rotation.desiredPosition = bestTarget;
+                return;
+            }
+
+            var otherTransform = transformLookup[hitEntity];
+            var speed = speedLookup[hitEntity];
+
+            float projSpeed = sense.cannonballSpeed;
+            float3 toTarget = otherTransform.Position - pos;
+            float dist = math.length(toTarget);
+
+            if (projSpeed > 0f && dist > 0f)
+            {
+                float3 moveDir = otherTransform.Forward();
+                float3 targetVel = moveDir * speed.speed;
+                float timeToHit = dist / projSpeed + Aim.ShootWarmupTime;
+                float3 predictedPos = otherTransform.Position + targetVel * timeToHit;
+                bestTarget = predictedPos;
+
+                Aim.HasTarget = true;
+                Aim.TargetPosition = bestTarget;
+
+                Aim.ShootTimeLeft = Aim.ShootWarmupTime;
             }
         }
+
+        rotation.desiredPosition = bestTarget;
     }
 }
