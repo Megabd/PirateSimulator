@@ -61,8 +61,28 @@ public struct PrevPosComponent : IComponentData
     public float3 PrePos;
 }
 
+public struct CollisionScanTimer : IComponentData
+{
+    public float TimeLeft;
+    public float Interval;
+}
 
+public struct AvoidanceState : IComponentData
+{
+    public bool Active;
+    public float3 Target;
+}
 
+public struct Aim : IComponentData
+{
+    public float RayCastTimeLeft;
+    public float RayCastInterval;
 
+    public float ShootWarmupTime;     // e.g. 0.5f (constant per cannon)
+    public float ShootTimeLeft; // counts down after target acquired
+
+    public bool HasTarget; 
+    public float3 TargetPosition;
+}
 
 
