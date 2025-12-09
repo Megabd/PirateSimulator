@@ -13,9 +13,17 @@ using UnityEngine.Windows;
 
 partial struct CalcPositionTarget : ISystem
 {
+    CollisionFilter filter;
+
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
+        filter = new CollisionFilter
+        {
+            BelongsTo = 1 << 0,
+            CollidesWith = 1 << 1,
+            GroupIndex = 0
+        };
     }
 
     [BurstCompile]
@@ -29,13 +37,6 @@ partial struct CalcPositionTarget : ISystem
         var transformLookup = SystemAPI.GetComponentLookup<LocalTransform>(true);
         var teamLookup = SystemAPI.GetComponentLookup<TeamComponent>(true);
         //var ltwLookup = SystemAPI.GetComponentLookup<LocalToWorld>(true); error here
-
-        CollisionFilter filter = new CollisionFilter
-        {
-            BelongsTo = 1 << 0,
-            CollidesWith = 1 << 1,
-            GroupIndex = 0
-        };
 
         var config = SystemAPI.GetSingleton<Config>();
 
