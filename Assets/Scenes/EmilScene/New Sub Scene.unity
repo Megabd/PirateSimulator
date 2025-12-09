@@ -152,6 +152,8 @@ MonoBehaviour:
   CannonBallPrefab: {fileID: 8669331111841744554, guid: f90f72ea415f4e64fa35084419c90535, type: 3}
   SeaPrefab: {fileID: 1985540441516581328, guid: b2eac37d9afc5bd4a937d69ede33e7bf, type: 3}
   ShipCount: 5000
+  Schedule: 1
+  ScheduleParallel: 1
   MapSize:
     x: 1000
     y: 1000

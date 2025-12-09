@@ -8,6 +8,8 @@ public class ConfigAuthoring : MonoBehaviour
     public GameObject CannonBallPrefab;
     public GameObject SeaPrefab;
     public int ShipCount;
+    public bool Schedule;
+    public bool ScheduleParallel;
     public float2 MapSize;
 
     class Baker : Baker<ConfigAuthoring>
@@ -21,6 +23,8 @@ public class ConfigAuthoring : MonoBehaviour
                 CannonBallPrefab = GetEntity(authoring.CannonBallPrefab, TransformUsageFlags.Dynamic),
                 SeaPrefab = GetEntity(authoring.SeaPrefab, TransformUsageFlags.Dynamic),
                 ShipCount = authoring.ShipCount,
+                Schedule = authoring.Schedule,
+                ScheduleParallel = authoring.ScheduleParallel
                 MapSize = authoring.MapSize,
             });
         }
@@ -32,5 +36,7 @@ public struct Config : IComponentData
     public Entity CannonBallPrefab;
     public Entity SeaPrefab;
     public int ShipCount;
+    public bool Schedule;
+    public bool ScheduleParallel;
     public float2 MapSize;
 }
