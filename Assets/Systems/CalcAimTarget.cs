@@ -8,22 +8,24 @@ using Unity.Collections;
 
 partial struct CalcAimTarget : ISystem
 {
+    CollisionFilter filter;
+
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
+        filter = new CollisionFilter
+        {
+            BelongsTo = 1 << 0,
+            CollidesWith = 1 << 1,
+            GroupIndex = 0
+        };
+
     }
 
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
         var physicsWorld = SystemAPI.GetSingleton<PhysicsWorldSingleton>().PhysicsWorld;
-
-        CollisionFilter filter = new CollisionFilter
-        {
-            BelongsTo = 1u << 0,
-            CollidesWith = 1u << 1,
-            GroupIndex = 0
-        };
 
         var teamLookup = SystemAPI.GetComponentLookup<TeamComponent>(true);
         var transformLookup = SystemAPI.GetComponentLookup<LocalTransform>(true);
