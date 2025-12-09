@@ -47,8 +47,8 @@ public partial struct CannonBallSystem : ISystem
             {
             transform.ValueRW.Position += ball.ValueRO.Velocity * DeltaTime;
 
-            ball.ValueRW.Lifetime += DeltaTime;
-            if (ball.ValueRO.Lifetime >= 5f)
+            ball.ValueRW.Lifetime -= DeltaTime;
+            if (ball.ValueRO.Lifetime <= 0f)
                 ECB.DestroyEntity(entity);
         }
     }
@@ -65,9 +65,8 @@ public partial struct CannonBallMoveJob : IJobEntity
     void Execute([EntityIndexInQuery] int entityInQueryIndex, Entity e, ref CannonBalls ball, ref LocalTransform xform)
     {
         xform.Position += ball.Velocity * DeltaTime;
-
-        ball.Lifetime += DeltaTime;
-        if (ball.Lifetime >= 5f)
+        ball.Lifetime -= DeltaTime;
+        if (ball.Lifetime <= 0f)
             ECB.DestroyEntity(entityInQueryIndex, e);
     }
 }

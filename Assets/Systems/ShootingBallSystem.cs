@@ -95,7 +95,7 @@ partial struct ShootingBallSystem : ISystem
             em.SetComponentData(ball, new CannonBalls
             {
                 Velocity = cannonVel + dir * canonSense.ValueRO.cannonballSpeed,
-                Lifetime = 0f,
+                Lifetime = 5f,
                 Radius = 0.5f //canonball hitbox
             });
 
