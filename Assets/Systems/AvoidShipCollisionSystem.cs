@@ -62,10 +62,11 @@ partial struct AvoidShipCollisionSystem : ISystem
         }
 
         else {
-        foreach (var (transform, rotation, timer, avoidance, entity)
+        foreach (var (transform, rotation, sense, timer, avoidance, entity)
             in SystemAPI.Query<
                 RefRO<LocalTransform>,
                 RefRW<RotationComponent>,
+                RefRO<ShipSenseComponent>,
                 RefRW<CollisionScanTimer>,
                 RefRW<AvoidanceState>>()
                 .WithEntityAccess())
@@ -194,7 +195,7 @@ public partial struct AvoidShipCollionJob : IJobEntity
 
     [ReadOnly]
     public PhysicsWorld physicsWorld;
-    void Execute(Entity e,  ref RotationComponent rotation, ref CollisionScanTimer timer, ref AvoidanceState avoidance)
+    void Execute(Entity e,  ref RotationComponent rotation, ref ShipSenseComponent sense, ref CollisionScanTimer timer, ref AvoidanceState avoidance)
     {
         NativeList<DistanceHit> hits = new NativeList<DistanceHit>(Allocator.Temp);
         var transform = transformLookup[e];
