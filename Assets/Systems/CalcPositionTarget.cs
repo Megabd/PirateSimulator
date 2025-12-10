@@ -280,12 +280,12 @@ public partial struct CalcPositionTargetJob : IJobEntity
                 
                 if (other == e)
                 {
-                    return;
+                    continue;
                 }
 
                 if (!transformLookup.HasComponent(other) || !teamLookup.HasComponent(other))
                 {
-                    return;
+                    continue;
                 }
                 var otherTransform = transformLookup[other];
                 var otherTeam = teamLookup[other];
