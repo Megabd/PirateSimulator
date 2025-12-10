@@ -31,16 +31,13 @@ partial struct AvoidShipCollisionSystem : ISystem
 
         float dt = SystemAPI.Time.DeltaTime;
 
-        float halfWidth = config.MapSize.x * 0.5f - 10f;
-        float halfHeight = config.MapSize.y * 0.5f - 10f;
-
         if (config.ScheduleParallel)
         {
             new AvoidShipCollionJob
             {
                 dt = dt,
-                halfWidth = halfWidth,
-                halfHeight = halfHeight,
+                halfWidth = SeaConfig.halfWidth,
+                halfHeight = SeaConfig.halfHeight,
                 transformLookup = transformLookup,
                 filter = filter,
                 physicsWorld = physicsWorld
@@ -53,8 +50,8 @@ partial struct AvoidShipCollisionSystem : ISystem
             new AvoidShipCollionJob
             {
                 dt = dt,
-                halfWidth = halfWidth,
-                halfHeight = halfHeight,
+                halfWidth = SeaConfig.halfWidth,
+                halfHeight = SeaConfig.halfHeight,
                 transformLookup = transformLookup,
                 filter = filter,
                 physicsWorld = physicsWorld
@@ -62,11 +59,10 @@ partial struct AvoidShipCollisionSystem : ISystem
         }
 
         else {
-        foreach (var (transform, rotation, sense, timer, avoidance, entity)
+        foreach (var (transform, rotation, timer, avoidance, entity)
             in SystemAPI.Query<
                 RefRO<LocalTransform>,
                 RefRW<RotationComponent>,
-                RefRO<ShipSenseComponent>,
                 RefRW<CollisionScanTimer>,
                 RefRW<AvoidanceState>>()
                 .WithEntityAccess())
@@ -165,8 +161,8 @@ partial struct AvoidShipCollisionSystem : ISystem
 
             if (avoidance.ValueRW.Active)
             {
-                avoidance.ValueRW.Target.x = math.clamp(avoidance.ValueRW.Target.x, -halfWidth, halfWidth);
-                avoidance.ValueRW.Target.z = math.clamp(avoidance.ValueRW.Target.z, -halfHeight, halfHeight);
+                avoidance.ValueRW.Target.x = math.clamp(avoidance.ValueRW.Target.x, -SeaConfig.halfWidth, SeaConfig.halfWidth);
+                avoidance.ValueRW.Target.z = math.clamp(avoidance.ValueRW.Target.z, -SeaConfig.halfHeight, SeaConfig.halfHeight);
                 rotation.ValueRW.desiredPosition = avoidance.ValueRW.Target;
             }
         }
@@ -195,7 +191,7 @@ public partial struct AvoidShipCollionJob : IJobEntity
 
     [ReadOnly]
     public PhysicsWorld physicsWorld;
-    void Execute(Entity e,  ref RotationComponent rotation, ref ShipSenseComponent sense, ref CollisionScanTimer timer, ref AvoidanceState avoidance)
+    void Execute(Entity e,  ref RotationComponent rotation, ref CollisionScanTimer timer, ref AvoidanceState avoidance)
     {
         NativeList<DistanceHit> hits = new NativeList<DistanceHit>(Allocator.Temp);
         var transform = transformLookup[e];

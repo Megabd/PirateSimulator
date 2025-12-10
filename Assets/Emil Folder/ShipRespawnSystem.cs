@@ -19,9 +19,6 @@ public partial struct ShipRespawnSystem : ISystem
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        var config = SystemAPI.GetSingleton<Config>();
-        float halfWidth = config.MapSize.x * 0.5f;
-        float halfHeight = config.MapSize.y * 0.5f;
         // Pull the RNG into a local (Burst requires structs to be local for modification)
         var rng = _random;
         foreach (var (health, transform) in SystemAPI.Query<RefRW<HealthComponent>, RefRW<LocalTransform>>())
@@ -36,20 +33,20 @@ public partial struct ShipRespawnSystem : ISystem
                 switch (side)
                 {
                     case 0:
-                        x = -halfWidth;
-                        z = rng.NextFloat(-halfHeight, halfHeight);
+                        x = -SeaConfig.halfWidth;
+                        z = rng.NextFloat(-SeaConfig.halfHeight, SeaConfig.halfHeight);
                         break;
                     case 1:
-                        x = halfWidth;
-                        z = rng.NextFloat(-halfHeight, halfHeight);
+                        x = SeaConfig.halfWidth;
+                        z = rng.NextFloat(-SeaConfig.halfHeight, SeaConfig.halfHeight);
                         break;
                     case 2:
-                        z = -halfHeight;
-                        x = rng.NextFloat(-halfWidth, halfWidth);
+                        z = -SeaConfig.halfHeight;
+                        x = rng.NextFloat(-SeaConfig.halfWidth, SeaConfig.halfWidth);
                         break;
                     case 3:
-                        z = halfHeight;
-                        x = rng.NextFloat(-halfWidth, halfWidth);
+                        z = SeaConfig.halfHeight;
+                        x = rng.NextFloat(-SeaConfig.halfWidth, SeaConfig.halfWidth);
                         break;
                 }
 

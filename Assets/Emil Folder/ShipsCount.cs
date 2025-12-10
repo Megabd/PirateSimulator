@@ -19,7 +19,7 @@ public class ShipsCountUI : MonoBehaviour
 
         // Build a query that matches ALL ship entities
         shipQuery = new EntityQueryBuilder(Allocator.Temp)
-            .WithAll<ShipSenseComponent>()
+            .WithAll<TeamComponent>()
             .Build(entityManager);
     }
 

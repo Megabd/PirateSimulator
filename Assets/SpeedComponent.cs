@@ -24,12 +24,6 @@ public struct TeamComponent : IComponentData
     public bool redTeam;
 }
 
-public struct ShipSenseComponent : IComponentData
-{
-    public float sampleOffset;
-    public float sampleRadius;
-}
-
 public struct CooldownTimer : IComponentData
 {
     public float TimeLeft;
@@ -57,8 +51,8 @@ public struct AvoidanceState : IComponentData
 
 public struct Aim : IComponentData
 {
-    public float RayCastTimeLeft;
-    public float RayCastInterval;
+    public float RayCastInterval;     // how often we *want* to raycast
+    public float NextRaycastTime;     // absolute time when we may raycast again
     public float ShootTimeLeft; // counts down after target acquired
 
     public bool HasTarget; 

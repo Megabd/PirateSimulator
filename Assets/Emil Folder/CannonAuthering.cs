@@ -24,7 +24,7 @@ public class CannonAuthoring : MonoBehaviour
             AddComponent(entity, new TeamComponent { redTeam = true });
             AddComponent(entity, new PrevPosComponent { PrePos = float3.zero });
 
-            AddComponent(entity, new Aim { RayCastTimeLeft = 1f, RayCastInterval = 1f, HasTarget = false, TargetPosition = float3.zero, ShootTimeLeft = 0.5f });
+            AddComponent(entity, new Aim { NextRaycastTime = 0f, RayCastInterval = 0.5f, HasTarget = false, TargetPosition = float3.zero, ShootTimeLeft = 0.5f });
         }
     }
 }

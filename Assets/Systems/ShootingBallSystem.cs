@@ -4,6 +4,9 @@ using Unity.Transforms;
 using Unity.Mathematics;
 using UnityEngine;
 
+[BurstCompile]
+[UpdateInGroup(typeof(SimulationSystemGroup))]
+[UpdateAfter(typeof(RotationSystem))]
 partial struct ShootingBallSystem : ISystem
 {
     private Unity.Mathematics.Random rand;
@@ -15,11 +18,10 @@ partial struct ShootingBallSystem : ISystem
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        var em = state.EntityManager;
         var config = SystemAPI.GetSingleton<Config>();
         var ecbSingleton = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>();
         var ecb = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter();
-        var ballXform = em.GetComponentData<LocalTransform>(config.CannonBallPrefab);
+        var ballXform = SystemAPI.GetComponent<LocalTransform>(config.CannonBallPrefab);
         float dt = SystemAPI.Time.DeltaTime;
 
 
@@ -45,9 +47,10 @@ partial struct ShootingBallSystem : ISystem
             }.Schedule(state.Dependency);
         }
 
-        else
+        /*else
         {
-        foreach (var (transform,
+            var em = state.EntityManager;
+            foreach (var (transform,
              rotation,
              aim,
              worldPos,
@@ -100,7 +103,7 @@ partial struct ShootingBallSystem : ISystem
             aim.ValueRW.HasTarget = false;
             rotation.ValueRW.desiredPosition = float3.zero;
         }
-        }
+        }*/
 
 
     }
@@ -120,7 +123,7 @@ public partial struct ShootingBallJob : IJobEntity
 
     public EntityCommandBuffer.ParallelWriter ecb;
     public LocalTransform ballXform;
-    void Execute([EntityIndexInQuery] int entityInQueryIndex, Entity e, ref LocalTransform transform, ref RotationComponent rotation, ref Aim aim, ref LocalToWorld worldPos, ref PrevPosComponent prevPos)
+    void Execute([EntityIndexInQuery] int entityInQueryIndex, Entity e, in LocalTransform transform, ref RotationComponent rotation, ref Aim aim, in LocalToWorld worldPos, ref PrevPosComponent prevPos)
     {
         float3 currentPos = worldPos.Position;
             float3 cannonVel = (currentPos - prevPos.PrePos) / dt; // world-space velocity

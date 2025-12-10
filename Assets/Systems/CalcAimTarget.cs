@@ -7,6 +7,8 @@ using Unity.Physics;
 using Unity.Transforms;
 using UnityEngine;
 
+[BurstCompile]
+
 partial struct CalcAimTarget : ISystem
 {
     CollisionFilter filter;
@@ -16,165 +18,87 @@ partial struct CalcAimTarget : ISystem
     {
         filter = new CollisionFilter
         {
-            BelongsTo = 1 << 0,
+            BelongsTo   = 1 << 0,
             CollidesWith = 1 << 1,
-            GroupIndex = 0
+            GroupIndex  = 0
         };
-
     }
 
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        var physicsWorld = SystemAPI.GetSingleton<PhysicsWorldSingleton>().PhysicsWorld;
+        var physicsWorldSingleton = SystemAPI.GetSingleton<PhysicsWorldSingleton>();
+        var physicsWorld          = physicsWorldSingleton.PhysicsWorld;
 
-        var teamLookup = SystemAPI.GetComponentLookup<TeamComponent>(true);
+        var teamLookup      = SystemAPI.GetComponentLookup<TeamComponent>(true);
         var transformLookup = SystemAPI.GetComponentLookup<LocalTransform>(true);
 
         float dt = SystemAPI.Time.DeltaTime;
+        float elapsedTime = (float)SystemAPI.Time.ElapsedTime;
+        var config  = SystemAPI.GetSingleton<Config>();
 
-        var config = SystemAPI.GetSingleton<Config>();
+        var job = new CalcAimTargetJob
+        {
+            dt = dt,
+            elapsedTime = elapsedTime,
+            filter = filter,
+            physicsWorld = physicsWorld,
+            transformLookup = transformLookup,
+            teamLookup = teamLookup
+        };
 
         if (config.ScheduleParallel)
         {
-            new CalcAimTargetJob
-            {
-                
-                dt = dt,
-                filter = filter,
-                physicsWorld = physicsWorld,
-                transformLookup = transformLookup,
-                teamLookup = teamLookup
-
-            }.ScheduleParallel();
+            state.Dependency = job.ScheduleParallel(state.Dependency);
         }
-
         else if (config.Schedule)
         {
-            new CalcAimTargetJob
-            {
-                dt = dt,
-                filter = filter,
-                physicsWorld = physicsWorld,
-                transformLookup = transformLookup,
-                teamLookup = teamLookup
-
-            }.Schedule();
+            state.Dependency = job.Schedule(state.Dependency);
         }
-
-        else {
-        foreach (var (rotation, team, toWorld, aim) in SystemAPI.Query<RefRW<RotationComponent>, RefRO<TeamComponent>, RefRO<LocalToWorld>, RefRW<Aim>>())
+        else
         {
-
-            var aimRW = aim.ValueRW;
-
-            if (aimRW.HasTarget)
-            {
-                rotation.ValueRW.desiredPosition = aimRW.TargetPosition;
-                continue;
-            }
-
-            aimRW.RayCastTimeLeft -= dt;
-            if (aimRW.RayCastTimeLeft > 0f)
-                {
-                    aim.ValueRW = aimRW;
-                    continue;
-                }
-            aimRW.RayCastTimeLeft = aimRW.RayCastInterval;
-
-            float3 pos = toWorld.ValueRO.Position;
-            float3 forward = toWorld.ValueRO.Forward;
-            float3 bestTarget = float3.zero;
-            RaycastInput rayInput = new RaycastInput
-            {
-                Start = pos,
-                End = pos + forward * CannonConfig.SenseDistance,
-                Filter = filter
-            };
-
-            if (physicsWorld.CastRay(rayInput, out Unity.Physics.RaycastHit hit))
-            {
-                var hitEntity = physicsWorld.Bodies[hit.RigidBodyIndex].Entity;
-
-                var teamComp = teamLookup[hitEntity];
-
-                if (teamComp.redTeam == team.ValueRO.redTeam)
-                {
-                    rotation.ValueRW.desiredPosition = bestTarget;
-                    continue;
-                }
-                var otherTransform = transformLookup[hitEntity];
-
-                float3 targetPosNow = otherTransform.Position;
-                float3 toTarget = targetPosNow - pos;
-                float dist = math.length(toTarget);
-
-                if (dist > 0f)
-                {
-                    float3 moveDir = otherTransform.Forward();
-                    float3 targetVel = moveDir * ShipConfig.ShipSpeed;
-                    float timeToHit = dist / CannonConfig.CannonballSpeed + CannonConfig.ShootWarmupTime;
-                    float3 predictedPos = targetPosNow + targetVel * timeToHit;
-                    bestTarget = predictedPos;
-
-                    aimRW.HasTarget = true;
-                    aimRW.TargetPosition = bestTarget;
-
-                    aimRW.ShootTimeLeft = CannonConfig.ShootWarmupTime;
-                }
-            }
-
-            rotation.ValueRW.desiredPosition = bestTarget;
-            aim.ValueRW = aimRW;
-            }
+            job.Run();
         }
     }
 
     [BurstCompile]
-    public void OnDestroy(ref SystemState state)
-    {
-    }
+    public void OnDestroy(ref SystemState state) { }
 }
-
-
 
 [BurstCompile]
 public partial struct CalcAimTargetJob : IJobEntity
 {
-    public float dt;
     public CollisionFilter filter;
+    public float dt;                // for ShootTimeLeft etc, if needed
+    public float elapsedTime;       // absolute time this frame
 
-    [ReadOnly]
-    public PhysicsWorld physicsWorld;
+    [ReadOnly] public PhysicsWorld physicsWorld;
+    [ReadOnly] public ComponentLookup<TeamComponent> teamLookup;
+    [ReadOnly] public ComponentLookup<LocalTransform> transformLookup;
 
-    [ReadOnly]
-    public ComponentLookup<TeamComponent> teamLookup;
-    [ReadOnly]
-    public ComponentLookup<LocalTransform> transformLookup;
-
-    void Execute(Entity e,  ref RotationComponent rotation, ref LocalToWorld toWorld, ref Aim aim)
+    void Execute(Entity e, ref RotationComponent rotation, in LocalToWorld toWorld, ref Aim aim)
     {
+        // Let rotation always follow current target if we have one
         if (aim.HasTarget)
-            {
-                rotation.desiredPosition = aim.TargetPosition;
-                return;
-            }
-
-        aim.RayCastTimeLeft -= dt;
-        if (aim.RayCastTimeLeft > 0f)
         {
-            return;
+            rotation.desiredPosition = aim.TargetPosition;
         }
 
-        aim.RayCastTimeLeft = aim.RayCastInterval;
+        // Not yet time to raycast again for this cannon
+        if (elapsedTime < aim.NextRaycastTime)
+            return;
 
-        float3 pos = toWorld.Position;
+        // Decide the next time *before* doing the raycast, so even failed casts keep cadence.
+        aim.NextRaycastTime = elapsedTime + aim.RayCastInterval;
+
+        float3 pos     = toWorld.Position;
         float3 forward = toWorld.Forward;
         float3 bestTarget = float3.zero;
+
         RaycastInput rayInput = new RaycastInput
         {
-            Start = pos,
-            End = pos + forward * CannonConfig.SenseDistance,
+            Start  = pos,
+            End    = pos + forward * CannonConfig.SenseDistance,
             Filter = filter
         };
 
@@ -182,9 +106,8 @@ public partial struct CalcAimTargetJob : IJobEntity
         {
             var hitEntity = physicsWorld.Bodies[hit.RigidBodyIndex].Entity;
 
-
             var teamComp = teamLookup[hitEntity];
-            var team = teamLookup[e];
+            var team     = teamLookup[e];
 
             if (teamComp.redTeam == team.redTeam)
             {
@@ -195,21 +118,21 @@ public partial struct CalcAimTargetJob : IJobEntity
             var otherTransform = transformLookup[hitEntity];
 
             float3 targetPosNow = otherTransform.Position;
-            float3 toTarget = targetPosNow - pos;
-            float dist = math.length(toTarget);
+            float3 toTarget     = targetPosNow - pos;
+            float dist          = math.length(toTarget);
 
             if (dist > 0f)
             {
-                float3 moveDir = otherTransform.Forward();
-                float3 targetVel = moveDir * ShipConfig.ShipSpeed;
-                float timeToHit = dist / CannonConfig.CannonballSpeed + CannonConfig.CannonballLifeTime;
-                float3 predictedPos = otherTransform.Position + targetVel * timeToHit;
+                float3 moveDir    = otherTransform.Forward();
+                float3 targetVel  = moveDir * ShipConfig.ShipSpeed;
+                float timeToHit   = dist / CannonConfig.CannonballSpeed + CannonConfig.CannonballLifeTime;
+                float3 predictedPos = targetPosNow + targetVel * timeToHit;
+
                 bestTarget = predictedPos;
 
-                aim.HasTarget = true;
+                aim.HasTarget      = true;
                 aim.TargetPosition = bestTarget;
-
-                aim.ShootTimeLeft = CannonConfig.CannonballLifeTime;
+                aim.ShootTimeLeft  = CannonConfig.CannonballLifeTime;
             }
         }
 

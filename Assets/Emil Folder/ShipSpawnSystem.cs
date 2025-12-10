@@ -21,16 +21,10 @@ public partial struct ShipSpawnSystem : ISystem
         var em = state.EntityManager;
         var config = SystemAPI.GetSingleton<Config>();
         int count = math.max(0, config.ShipCount);
-
+        double elapsedTimeD = SystemAPI.Time.ElapsedTime;
+        float elapsedTime = (float)elapsedTimeD;
         var entities = new NativeArray<Entity>(count, Allocator.Temp);
         em.Instantiate(config.ShipPrefab, entities);
-
-        float halfWidth = config.MapSize.x * 0.5f;
-        float halfHeight = config.MapSize.y * 0.5f;
-        //float halfWidth = config.ShipCount * 0.25f;  // 300 wide
-        //float halfHeight = config.ShipCount * 0.125f;   // 100 tall
-        //float halfWidth = 150f;  // 300 wide
-        //float halfHeight = 50;   // 100 tall
         var rng = Unity.Mathematics.Random.CreateFromIndex(1337u);
         uint seed = 1;
         bool team = true;
@@ -45,8 +39,8 @@ public partial struct ShipSpawnSystem : ISystem
                 team = true;
             }
             float2 xz = rng.NextFloat2(
-                new float2(-halfWidth, -halfHeight),
-                new float2(halfWidth, halfHeight));
+                new float2(-SeaConfig.halfWidth, -SeaConfig.halfHeight),
+                new float2(SeaConfig.halfWidth, SeaConfig.halfHeight));
 
             var pos = new float3(xz.x, 0f, xz.y);
             var tilt = quaternion.Euler(math.radians(90f), 0f, 0f);
@@ -101,8 +95,8 @@ public partial struct ShipSpawnSystem : ISystem
                 {
                     var aim = em.GetComponentData<Aim>(ele.Cannon);
 
-                    float rand01 = rng.NextFloat();
-                    aim.RayCastTimeLeft = aim.RayCastInterval * rand01;
+                    float rand01 = rng.NextFloat();                  // 0..1
+                    aim.NextRaycastTime = elapsedTime + aim.RayCastInterval * rand01;
 
                     em.SetComponentData(ele.Cannon, aim);
                 }
