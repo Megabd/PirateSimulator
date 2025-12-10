@@ -1,7 +1,6 @@
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
-using UnityEngine;
 
 [BurstCompile]
 public partial struct DestroyPendingBallsSystem : ISystem
@@ -17,8 +16,8 @@ public partial struct DestroyPendingBallsSystem : ISystem
     public void OnUpdate(ref SystemState state)
     {
         var config = SystemAPI.GetSingleton<Config>();
-
-        var ecb = new EntityCommandBuffer(Allocator.TempJob);
+        var ecbSingleton = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
+        var ecb = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged);
 
         if (config.ScheduleParallel)
         {
@@ -27,12 +26,7 @@ public partial struct DestroyPendingBallsSystem : ISystem
                 ECB = ecb.AsParallelWriter()
             };
 
-            var handle = job.ScheduleParallel(state.Dependency);
-            handle.Complete();
-            ecb.Playback(state.EntityManager);
-            ecb.Dispose();
-
-            state.Dependency = handle;
+            state.Dependency = job.ScheduleParallel(state.Dependency);
         }
         else if (config.Schedule)
         {
@@ -41,23 +35,17 @@ public partial struct DestroyPendingBallsSystem : ISystem
                 ECB = ecb
             };
 
-            var handle = job.Schedule(state.Dependency);
-            handle.Complete();
-            ecb.Playback(state.EntityManager);
-            ecb.Dispose();
-
-            state.Dependency = handle;
+            state.Dependency = job.Schedule(state.Dependency);
         }
         else
         {
+            // Simple main-thread fallback
             var job = new DestroyPendingBallsJob
             {
                 ECB = ecb
             };
 
             job.Run();
-            ecb.Playback(state.EntityManager);
-            ecb.Dispose();
         }
     }
 

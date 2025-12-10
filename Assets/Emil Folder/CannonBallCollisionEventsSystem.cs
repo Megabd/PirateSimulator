@@ -3,11 +3,13 @@ using Unity.Collections;
 using Unity.Entities;
 using Unity.Physics;
 using Unity.Physics.Systems;
+using Unity.VisualScripting;
 using UnityEngine;
 
 // Runs during physics so we see collision events
 [BurstCompile]
-[UpdateInGroup(typeof(PhysicsSystemGroup))]
+[UpdateInGroup(typeof(FixedStepSimulationSystemGroup))]
+[UpdateAfter(typeof(PhysicsSystemGroup))]
 public partial struct CannonBallCollisionEventsSystem : ISystem
 {
     private ComponentLookup<CannonBalls> _ballLookup;
@@ -34,28 +36,30 @@ public partial struct CannonBallCollisionEventsSystem : ISystem
         _shipLookup.Update(ref state);
         _healthLookup.Update(ref state);
 
+        
         var sim = SystemAPI.GetSingleton<SimulationSingleton>();
         var ecbSingleton = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
         var config = SystemAPI.GetSingleton<Config>();
 
-        var ecb = new EntityCommandBuffer(Allocator.TempJob);
-
         if (config.ScheduleParallel)
         {
-            var job = new CannonBallTriggerEventJob //parallel version not implemented yet
+            var ecb = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter();
+
+            var parallelJob = new CannonBallTriggerEventParallelJob
             {
                 BallLookup = _ballLookup,
                 ShipLookup = _shipLookup,
-                HealthLookup = _healthLookup,   
+                HealthLookup = _healthLookup,
                 ECB = ecb,
                 Damage = 1
             };
-            //state.Dependency = job.Schedule(sim, state.Dependency);
-            ecb.Dispose();
 
+            var handle = parallelJob.Schedule(sim, state.Dependency);
+            state.Dependency = handle;
         }
         else if (config.Schedule)
         {
+            var ecb = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged);
             var job = new CannonBallTriggerEventJob // scheduled version
             {
                 BallLookup = _ballLookup,
@@ -65,19 +69,26 @@ public partial struct CannonBallCollisionEventsSystem : ISystem
                 Damage = 1
             };
             var handle = job.Schedule(sim, state.Dependency);
-
-            handle.Complete();
-            ecb.Playback(state.EntityManager);
-            ecb.Dispose();
-
             state.Dependency = handle;
-
         }
         else
         {
-            // TODO: main-thread version – we'll come back to this
-            //job.Run(sim);
+            var ecb = new EntityCommandBuffer(Allocator.TempJob);
+            var job = new CannonBallTriggerEventJob
+            {
+                BallLookup = _ballLookup,
+                ShipLookup = _shipLookup,
+                HealthLookup = _healthLookup,
+                ECB = ecb,
+                Damage = 1
+            };
+
+            var handle = job.Schedule(sim, state.Dependency);
+            handle.Complete();
+            ecb.Playback(state.EntityManager); // forced main-thread version i think
             ecb.Dispose();
+            state.Dependency = handle;
+
         }
     }   
 
@@ -123,9 +134,50 @@ public struct CannonBallTriggerEventJob : ITriggerEventsJob
         health.health -= Damage;
         HealthLookup[ship] = health;
 
-        ECB.AddComponent(ball, new PendingDestroyTag());
+        ECB.AddComponent<PendingDestroyTag>(ball);
+        //destroy the ball
+        //ECB.DestroyEntity(ball);
+
     }
 
+}
+
+[BurstCompile]
+public struct CannonBallTriggerEventParallelJob : ITriggerEventsJob
+{
+    [ReadOnly] public ComponentLookup<CannonBalls> BallLookup;
+    public ComponentLookup<ShipAuthoring.Ship> ShipLookup;
+    public ComponentLookup<HealthComponent> HealthLookup;
+
+    public EntityCommandBuffer.ParallelWriter ECB;
+    public int Damage;
+
+    public void Execute(TriggerEvent triggerEvent)
+    {
+        var a = triggerEvent.EntityA;
+        var b = triggerEvent.EntityB;
+
+        bool aIsBall = BallLookup.HasComponent(a);
+        bool bIsBall = BallLookup.HasComponent(b);
+
+        if (!aIsBall && !bIsBall)
+            return;
+
+        if (aIsBall && ShipLookup.HasComponent(b))
+            HitShip(0, ball: a, ship: b);
+
+        else if (bIsBall && ShipLookup.HasComponent(a))
+            HitShip(0, ball: b, ship: a);
+    }
+
+    void HitShip(int sortKey, Entity ball, Entity ship)
+    {
+        var health = HealthLookup[ship];
+        health.health -= Damage;
+        HealthLookup[ship] = health;
+
+        ECB.AddComponent<PendingDestroyTag>(sortKey, ball);
+    }
 }
 
 public struct PendingDestroyTag : IComponentData { }
