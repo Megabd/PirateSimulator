@@ -24,12 +24,6 @@ public struct TeamComponent : IComponentData
     public bool redTeam;
 }
 
-public struct ShipSenseComponent : IComponentData
-{
-    public float sampleOffset;
-    public float sampleRadius;
-}
-
 public struct CooldownTimer : IComponentData
 {
     public float TimeLeft;
