@@ -17,13 +17,12 @@ public class ShipsCountUI : MonoBehaviour
         var world = World.DefaultGameObjectInjectionWorld;
         var entityManager = world.EntityManager;
 
-        // Build a query that matches ALL ship entities
+        // Build a query that matches ALL ship entities .WithAll<TeamComponent>()
         shipQuery = new EntityQueryBuilder(Allocator.Temp)
-            .WithAll<TeamComponent>()
             .Build(entityManager);
     }
 
-    void Update()
+    void FixedUpdate()
     {
         int count = shipQuery.CalculateEntityCount();
         textField.text = $"Ships: {count}";
