@@ -58,7 +58,6 @@ public partial struct ShipRespawnJob : IJobEntity
     void Execute([EntityIndexInQuery] int entityInQueryIndex,ref HealthComponent health, ref LocalTransform transform)
     {
         if (health.health > 0) return;
-        Debug.Log("somethingdied pog");
         // "Respawn": reset health
         health.health = health.startingHealth;
 
