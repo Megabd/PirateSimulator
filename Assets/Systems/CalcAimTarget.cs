@@ -96,7 +96,7 @@ public partial struct CalcAimTargetJob : IJobEntity
             return;
 
         // Decide the next time *before* doing the raycast, so even failed casts keep cadence.
-        aim.NextRaycastTime = elapsedTime + rand.NextFloat(0.2f, 0.6f);
+        aim.NextRaycastTime = elapsedTime + rand.NextFloat(0.4f, 0.8f);
 
         float3 pos     = toWorld.Position;
         float3 forward = toWorld.Forward;
