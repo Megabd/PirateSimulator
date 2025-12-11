@@ -210,7 +210,7 @@ public partial struct CalcPositionTargetJob : IJobEntity
 
     
 
-    void Execute(Entity e,  ref RotationComponent rotation, ref LocalToWorld toWorld, ref CooldownTimer timer)
+    void Execute(Entity e,  ref RotationComponent rotation, ref CooldownTimer timer)
     {
         timer.TimeLeft -= dt;
         if (timer.TimeLeft > 0f)
