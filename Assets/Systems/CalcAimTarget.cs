@@ -61,6 +61,7 @@ partial struct CalcAimTarget : ISystem
         }
         else
         {
+            state.Dependency.Complete();
             job.Run();
         }
     }

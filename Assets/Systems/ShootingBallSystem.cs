@@ -46,8 +46,7 @@ partial struct ShootingBallSystem : ISystem
                 ballXform = ballXform
             }.Schedule(state.Dependency);
         }
-
-        /*else
+        else
         {
             var em = state.EntityManager;
             foreach (var (transform,
@@ -103,7 +102,7 @@ partial struct ShootingBallSystem : ISystem
             aim.ValueRW.HasTarget = false;
             rotation.ValueRW.desiredPosition = float3.zero;
         }
-        }*/
+        }
 
 
     }
