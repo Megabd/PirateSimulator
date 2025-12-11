@@ -57,6 +57,6 @@ public static class ShipConfig
 
 public struct SeaConfig
 {
-    public readonly static float halfWidth = 3000f;
-    public readonly static float halfHeight = 3000f;
+    public readonly static float halfWidth = 1000f;
+    public readonly static float halfHeight = 1000f;
 }

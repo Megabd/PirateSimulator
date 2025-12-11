@@ -13,6 +13,7 @@ public class CannonBallAuthoring : MonoBehaviour
             var entity = GetEntity(authoring, TransformUsageFlags.Dynamic);
             AddComponent<CannonBalls>(entity);
             AddComponent<URPMaterialPropertyBaseColor>(entity);
+            AddComponent<PendingDestroyTag>(entity);
         }
     }
 }
@@ -22,4 +23,9 @@ public struct CannonBalls : IComponentData
     public float3 Velocity;
     public float Lifetime;
     public float Radius;
+}
+
+public struct CanonBallRef : IComponentData
+{
+    public Entity Canonball;
 }

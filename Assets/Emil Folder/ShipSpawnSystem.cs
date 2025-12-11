@@ -99,6 +99,18 @@ public partial struct ShipSpawnSystem : ISystem
                     aim.NextRaycastTime = elapsedTime + aim.RayCastInterval * rand01;
 
                     em.SetComponentData(ele.Cannon, aim);
+
+                    em.SetComponentData(ele.Cannon, new PrevPosComponent { PrePos = float3.zero, Seed = seed });
+                    var CanonBall = em.GetComponentData<CanonBallRef>(ele.Cannon);
+                    var CanonBallTransform = em.GetComponentData<LocalTransform>(CanonBall.Canonball);
+
+                    float2 CanonBallXZ = rng.NextFloat2(
+                    new float2(-SeaConfig.halfWidth, -SeaConfig.halfHeight),
+                    new float2(SeaConfig.halfWidth, SeaConfig.halfHeight));
+
+                    var canonBallPos = new float3(CanonBallXZ.x, -2f, CanonBallXZ.y);
+                    CanonBallTransform = new LocalTransform{Position = canonBallPos, Rotation = quaternion.identity, Scale = 1f};
+                    em.SetComponentData(CanonBall.Canonball, CanonBallTransform);
                 }
 
                 j++;

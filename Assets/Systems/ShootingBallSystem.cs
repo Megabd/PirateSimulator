@@ -3,6 +3,7 @@ using Unity.Entities;
 using Unity.Transforms;
 using Unity.Mathematics;
 using UnityEngine;
+using System;
 
 [BurstCompile]
 [UpdateInGroup(typeof(SimulationSystemGroup))]
@@ -24,7 +25,6 @@ partial struct ShootingBallSystem : ISystem
         var ballXform = SystemAPI.GetComponent<LocalTransform>(config.CannonBallPrefab);
         float dt = SystemAPI.Time.DeltaTime;
 
-
         if (config.ScheduleParallel)
         {
             state.Dependency = new ShootingBallJob
@@ -32,7 +32,7 @@ partial struct ShootingBallSystem : ISystem
                 dt = dt,
                 config = config,
                 ecb = ecb,
-                ballXform = ballXform
+                ballXform = ballXform,
             }.ScheduleParallel(state.Dependency);
         }
 
@@ -43,7 +43,7 @@ partial struct ShootingBallSystem : ISystem
                 dt = dt,
                 config = config,
                 ecb = ecb,
-                ballXform = ballXform
+                ballXform = ballXform,
             }.Schedule(state.Dependency);
         }
 
@@ -123,7 +123,8 @@ public partial struct ShootingBallJob : IJobEntity
 
     public EntityCommandBuffer.ParallelWriter ecb;
     public LocalTransform ballXform;
-    void Execute([EntityIndexInQuery] int entityInQueryIndex, Entity e, in LocalTransform transform, ref RotationComponent rotation, ref Aim aim, in LocalToWorld worldPos, ref PrevPosComponent prevPos)
+
+    void Execute([EntityIndexInQuery] int entityInQueryIndex, Entity e, in LocalTransform transform, ref RotationComponent rotation, ref Aim aim, in LocalToWorld worldPos, ref PrevPosComponent prevPos, ref CanonBallRef ball)
     {
         float3 currentPos = worldPos.Position;
             float3 cannonVel = (currentPos - prevPos.PrePos) / dt; // world-space velocity
@@ -143,18 +144,16 @@ public partial struct ShootingBallJob : IJobEntity
                 // still winding up, don't shoot yet
                 return;
             }
-
-            var ball = ecb.Instantiate(entityInQueryIndex, config.CannonBallPrefab);
+            
 
             // spawn at cannon position
             ballXform.Position = currentPos;
             ballXform.Rotation = transform.Rotation; // local rotation of cannon entity
-            ecb.SetComponent(entityInQueryIndex, ball, ballXform);
-
+            ecb.SetComponent(entityInQueryIndex, ball.Canonball, ballXform);
 
             // ball inherits cannon velocity + its own shooting speed
             float3 dir = math.normalize(worldPos.Forward);
-            ecb.SetComponent(entityInQueryIndex, ball, new CannonBalls
+            ecb.SetComponent(entityInQueryIndex, ball.Canonball, new CannonBalls
             {
                 Velocity = cannonVel + dir * CannonConfig.CannonballSpeed,
                 Lifetime = CannonConfig.CannonballLifeTime,

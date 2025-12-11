@@ -50,7 +50,7 @@ public class ShipAuthoring : MonoBehaviour
         }
 }
 
-// A component that will be added to the root entity of every tank.
+// A component that will be added to the root entity of every ship.
     public struct CannonElement : IBufferElementData
     {
         public Entity Cannon;

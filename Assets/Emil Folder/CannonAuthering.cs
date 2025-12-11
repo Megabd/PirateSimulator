@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class CannonAuthoring : MonoBehaviour
 {
+    public GameObject CanonBallPrefab;
     class Baker : Baker<CannonAuthoring>
     {
         public override void Bake(CannonAuthoring authoring)
@@ -25,6 +26,7 @@ public class CannonAuthoring : MonoBehaviour
             AddComponent(entity, new PrevPosComponent { PrePos = float3.zero });
 
             AddComponent(entity, new Aim { NextRaycastTime = 0f, RayCastInterval = 0.5f, HasTarget = false, TargetPosition = float3.zero, ShootTimeLeft = 0.5f });
+            AddComponent(entity, new CanonBallRef {Canonball = GetEntity(authoring.CanonBallPrefab, TransformUsageFlags.Dynamic)});
         }
     }
 }

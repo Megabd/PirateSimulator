@@ -1,6 +1,9 @@
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
+using Unity.Mathematics;
+using Unity.Transforms;
+using UnityEngine;
 
 [BurstCompile]
 public partial struct DestroyPendingBallsSystem : ISystem
@@ -23,7 +26,8 @@ public partial struct DestroyPendingBallsSystem : ISystem
         {
             var job = new DestroyPendingBallsParallelJob
             {
-                ECB = ecb.AsParallelWriter()
+                ECB = ecb.AsParallelWriter(),
+                config = config
             };
 
             state.Dependency = job.ScheduleParallel(state.Dependency);
@@ -32,7 +36,8 @@ public partial struct DestroyPendingBallsSystem : ISystem
         {
             var job = new DestroyPendingBallsJob
             {
-                ECB = ecb
+                ECB = ecb,
+                config = config
             };
 
             state.Dependency = job.Schedule(state.Dependency);
@@ -42,7 +47,8 @@ public partial struct DestroyPendingBallsSystem : ISystem
             // Simple main-thread fallback
             var job = new DestroyPendingBallsJob
             {
-                ECB = ecb
+                ECB = ecb,
+                config = config
             };
 
             job.Run();
@@ -58,9 +64,17 @@ public partial struct DestroyPendingBallsJob : IJobEntity
 {
     public EntityCommandBuffer ECB;
 
-    void Execute(Entity entity, in PendingDestroyTag tag)
+    public Config config;
+
+    void Execute(Entity entity, ref LocalTransform transform, in PendingDestroyTag tag)
     {
-        ECB.DestroyEntity(entity);
+        var rng = Unity.Mathematics.Random.CreateFromIndex(1337u);
+        float2 xz = rng.NextFloat2(
+                new float2(-SeaConfig.halfWidth, -SeaConfig.halfHeight),
+                new float2(SeaConfig.halfWidth, SeaConfig.halfHeight));
+
+        var pos = new float3(xz.x, -2f, xz.y);
+        transform.Position = pos;
     }
 }
 
@@ -69,8 +83,16 @@ public partial struct DestroyPendingBallsParallelJob : IJobEntity
 {
     public EntityCommandBuffer.ParallelWriter ECB;
 
-    void Execute([EntityIndexInQuery] int sortKey, Entity entity, in PendingDestroyTag tag)
+    public Config config;
+
+    void Execute([EntityIndexInQuery] int sortKey, Entity entity, ref LocalTransform transform, in PendingDestroyTag tag)
     {
-        ECB.DestroyEntity(sortKey, entity);
+        var rng = Unity.Mathematics.Random.CreateFromIndex(1337u);
+        float2 xz = rng.NextFloat2(
+                new float2(-SeaConfig.halfWidth, -SeaConfig.halfHeight),
+                new float2(SeaConfig.halfWidth, SeaConfig.halfHeight));
+
+        var pos = new float3(xz.x, -2f, xz.y);
+        transform.Position = pos;
     }
 }

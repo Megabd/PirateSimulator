@@ -35,6 +35,8 @@ public struct CooldownTimer : IComponentData
 public struct PrevPosComponent : IComponentData
 {
     public float3 PrePos;
+
+    public uint Seed;
 }
 
 public struct CollisionScanTimer : IComponentData

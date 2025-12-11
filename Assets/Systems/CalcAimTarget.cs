@@ -12,6 +12,7 @@ using UnityEngine;
 partial struct CalcAimTarget : ISystem
 {
     CollisionFilter filter;
+    Unity.Mathematics.Random rand;
 
     [BurstCompile]
     public void OnCreate(ref SystemState state)
@@ -22,11 +23,13 @@ partial struct CalcAimTarget : ISystem
             CollidesWith = 1 << 1,
             GroupIndex  = 0
         };
+        Unity.Mathematics.Random rand = new Unity.Mathematics.Random(5u);
     }
 
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
+        
         var physicsWorldSingleton = SystemAPI.GetSingleton<PhysicsWorldSingleton>();
         var physicsWorld          = physicsWorldSingleton.PhysicsWorld;
 
@@ -41,10 +44,12 @@ partial struct CalcAimTarget : ISystem
         {
             dt = dt,
             elapsedTime = elapsedTime,
+            rand = rand,
             filter = filter,
             physicsWorld = physicsWorld,
             transformLookup = transformLookup,
             teamLookup = teamLookup
+
         };
 
         if (config.ScheduleParallel)
@@ -70,7 +75,9 @@ public partial struct CalcAimTargetJob : IJobEntity
 {
     public CollisionFilter filter;
     public float dt;                // for ShootTimeLeft etc, if needed
-    public float elapsedTime;       // absolute time this frame
+    public float elapsedTime;     // absolute time this frame
+
+    public Unity.Mathematics.Random rand;
 
     [ReadOnly] public PhysicsWorld physicsWorld;
     [ReadOnly] public ComponentLookup<TeamComponent> teamLookup;
@@ -82,6 +89,7 @@ public partial struct CalcAimTargetJob : IJobEntity
         if (aim.HasTarget)
         {
             rotation.desiredPosition = aim.TargetPosition;
+            return;
         }
 
         // Not yet time to raycast again for this cannon
