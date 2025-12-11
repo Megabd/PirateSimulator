@@ -143,7 +143,7 @@ public partial struct ShootingBallJob : IJobEntity
                 // still winding up, don't shoot yet
                 return;
             }
-
+            
             var ball = ecb.Instantiate(entityInQueryIndex, config.CannonBallPrefab);
 
             // spawn at cannon position

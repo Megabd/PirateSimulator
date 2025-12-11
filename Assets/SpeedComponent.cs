@@ -27,9 +27,6 @@ public struct TeamComponent : IComponentData
 public struct CooldownTimer : IComponentData
 {
     public float TimeLeft;
-    public float MinSecs;
-    public float MaxSecs;
-    public uint Seed;
 }
 
 public struct PrevPosComponent : IComponentData
@@ -51,7 +48,6 @@ public struct AvoidanceState : IComponentData
 
 public struct Aim : IComponentData
 {
-    public float RayCastInterval;     // how often we *want* to raycast
     public float NextRaycastTime;     // absolute time when we may raycast again
     public float ShootTimeLeft; // counts down after target acquired
 

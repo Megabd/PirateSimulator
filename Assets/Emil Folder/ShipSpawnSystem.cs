@@ -4,6 +4,7 @@ using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Rendering;
 using Unity.Transforms;
+using UnityEngine;
 
 public partial struct ShipSpawnSystem : ISystem
 {
@@ -51,8 +52,9 @@ public partial struct ShipSpawnSystem : ISystem
             em.SetComponentData(entities[i],
                 new RotationComponent {turnSpeed = 60.0f, desiredPosition = new float3(0.0f, 0.0f, 0.0f), maxTurnAngle = 360.0f, startRotation = quaternion.identity});
             em.SetComponentData(entities[i], new TeamComponent { redTeam = team });
+            float rand = rng.NextFloat(1f, 5f);
             em.SetComponentData(entities[i],
-                new CooldownTimer { TimeLeft = 1.0f, MinSecs = 5.0f, MaxSecs = 15.0f, Seed = seed });
+                new CooldownTimer { TimeLeft = rand });
 
             //ship color
             var ship = em.GetComponentData<ShipAuthoring.Ship>(entities[i]);
@@ -95,8 +97,8 @@ public partial struct ShipSpawnSystem : ISystem
                 {
                     var aim = em.GetComponentData<Aim>(ele.Cannon);
 
-                    float rand01 = rng.NextFloat();                  // 0..1
-                    aim.NextRaycastTime = elapsedTime + aim.RayCastInterval * rand01;
+                    float rand2 = rng.NextFloat(0.2f, 0.6f);
+                    aim.NextRaycastTime = elapsedTime + rand2;
 
                     em.SetComponentData(ele.Cannon, aim);
                 }

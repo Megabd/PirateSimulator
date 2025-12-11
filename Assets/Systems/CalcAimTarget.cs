@@ -13,6 +13,7 @@ partial struct CalcAimTarget : ISystem
 {
     CollisionFilter filter;
 
+    public Unity.Mathematics.Random rand;
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
@@ -22,6 +23,8 @@ partial struct CalcAimTarget : ISystem
             CollidesWith = 1 << 1,
             GroupIndex  = 0
         };
+
+        rand = new Unity.Mathematics.Random(146361515);
     }
 
     [BurstCompile]
@@ -44,7 +47,8 @@ partial struct CalcAimTarget : ISystem
             filter = filter,
             physicsWorld = physicsWorld,
             transformLookup = transformLookup,
-            teamLookup = teamLookup
+            teamLookup = teamLookup,
+            rand = rand
         };
 
         if (config.ScheduleParallel)
@@ -71,6 +75,7 @@ public partial struct CalcAimTargetJob : IJobEntity
     public CollisionFilter filter;
     public float dt;                // for ShootTimeLeft etc, if needed
     public float elapsedTime;       // absolute time this frame
+    public Unity.Mathematics.Random rand;
 
     [ReadOnly] public PhysicsWorld physicsWorld;
     [ReadOnly] public ComponentLookup<TeamComponent> teamLookup;
@@ -82,6 +87,7 @@ public partial struct CalcAimTargetJob : IJobEntity
         if (aim.HasTarget)
         {
             rotation.desiredPosition = aim.TargetPosition;
+            return;
         }
 
         // Not yet time to raycast again for this cannon
@@ -89,7 +95,7 @@ public partial struct CalcAimTargetJob : IJobEntity
             return;
 
         // Decide the next time *before* doing the raycast, so even failed casts keep cadence.
-        aim.NextRaycastTime = elapsedTime + aim.RayCastInterval;
+        aim.NextRaycastTime = elapsedTime + rand.NextFloat(0.2f, 0.6f);
 
         float3 pos     = toWorld.Position;
         float3 forward = toWorld.Forward;
@@ -132,7 +138,7 @@ public partial struct CalcAimTargetJob : IJobEntity
 
                 aim.HasTarget      = true;
                 aim.TargetPosition = bestTarget;
-                aim.ShootTimeLeft  = CannonConfig.CannonballLifeTime;
+                aim.ShootTimeLeft  = CannonConfig.ShootWarmupTime;
             }
         }
 
