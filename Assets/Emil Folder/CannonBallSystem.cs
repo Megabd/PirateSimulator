@@ -37,7 +37,7 @@ public partial struct CannonBallSystem : ISystem
             {
                 ECB = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter(),
                 DeltaTime = SystemAPI.Time.DeltaTime
-            }.Schedule(); // you can upgrade to ScheduleParallel later
+            }.Schedule();
         }
         else
         {
