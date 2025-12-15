@@ -180,5 +180,8 @@ public struct CannonBallTriggerEventParallelJob : ITriggerEventsJob
     }
 }
 
-public struct PendingDestroyTag : IComponentData { }
+public struct PendingDestroyTag : IComponentData
+{
+    public bool destroy;
+}
 

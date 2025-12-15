@@ -66,8 +66,10 @@ public partial struct DestroyPendingBallsJob : IJobEntity
 
     public Config config;
 
-    void Execute(Entity entity, ref LocalTransform transform, in PendingDestroyTag tag)
+    void Execute(Entity entity, ref LocalTransform transform, ref PendingDestroyTag tag)
     {
+        if (tag.destroy = true)
+        {
         var rng = Unity.Mathematics.Random.CreateFromIndex(1337u);
         float2 xz = rng.NextFloat2(
                 new float2(-SeaConfig.halfWidth, -SeaConfig.halfHeight),
@@ -75,6 +77,8 @@ public partial struct DestroyPendingBallsJob : IJobEntity
 
         var pos = new float3(xz.x, -2f, xz.y);
         transform.Position = pos;
+        tag.destroy = false;
+        }
     }
 }
 
@@ -85,8 +89,10 @@ public partial struct DestroyPendingBallsParallelJob : IJobEntity
 
     public Config config;
 
-    void Execute([EntityIndexInQuery] int sortKey, Entity entity, ref LocalTransform transform, in PendingDestroyTag tag)
+    void Execute([EntityIndexInQuery] int sortKey, Entity entity, ref LocalTransform transform, ref PendingDestroyTag tag)
     {
+        if (tag.destroy = true)
+        {
         var rng = Unity.Mathematics.Random.CreateFromIndex(1337u);
         float2 xz = rng.NextFloat2(
                 new float2(-SeaConfig.halfWidth, -SeaConfig.halfHeight),
@@ -94,5 +100,7 @@ public partial struct DestroyPendingBallsParallelJob : IJobEntity
 
         var pos = new float3(xz.x, -2f, xz.y);
         transform.Position = pos;
+        tag.destroy = false;
+        }
     }
 }

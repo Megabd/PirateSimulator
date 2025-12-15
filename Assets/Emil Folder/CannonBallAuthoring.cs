@@ -13,7 +13,7 @@ public class CannonBallAuthoring : MonoBehaviour
             var entity = GetEntity(authoring, TransformUsageFlags.Dynamic);
             AddComponent<CannonBalls>(entity);
             AddComponent<URPMaterialPropertyBaseColor>(entity);
-            AddComponent<PendingDestroyTag>(entity);
+            AddComponent(entity, new PendingDestroyTag { destroy = true });
         }
     }
 }

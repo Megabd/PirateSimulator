@@ -28,6 +28,27 @@ public partial struct ShipSpawnSystem : ISystem
         var rng = Unity.Mathematics.Random.CreateFromIndex(1337u);
         uint seed = 1;
         bool team = true;
+        int canonballCount = config.ShipCount * 6;
+        var canonballEntities = new NativeArray<Entity>(canonballCount, Allocator.Temp);
+        em.Instantiate(config.CannonBallPrefab, canonballEntities);
+        for (int i = 0; i < count; i++)
+        {
+            float2 xz = rng.NextFloat2(
+                new float2(-SeaConfig.halfWidth, -SeaConfig.halfHeight),
+                new float2(SeaConfig.halfWidth, SeaConfig.halfHeight));
+
+            var pos = new float3(xz.x, -2f, xz.y);
+            em.SetComponentData(canonballEntities[i],
+                LocalTransform.FromPositionRotationScale(pos, quaternion.identity, 1f));
+            em.SetComponentData(canonballEntities[i], new CannonBalls
+            {
+                Velocity = 0f,
+                Lifetime = CannonConfig.CannonballLifeTime,
+                Radius = 0.5f //canonball hitbox
+            });
+        }
+
+        int j = 0;
         for (int i = 0; i < count; i++)
         {
             if (team)
@@ -69,7 +90,7 @@ public partial struct ShipSpawnSystem : ISystem
 
 
             var cannonBuffer = em.GetBuffer<ShipAuthoring.CannonElement>(entities[i]);
-            int j = 0;
+           
 
             // Apply team component to each cannon entity
             foreach (var ele in cannonBuffer)
@@ -101,7 +122,9 @@ public partial struct ShipSpawnSystem : ISystem
                     em.SetComponentData(ele.Cannon, aim);
 
                     em.SetComponentData(ele.Cannon, new PrevPosComponent { PrePos = float3.zero, Seed = seed });
-                    var CanonBall = em.GetComponentData<CanonBallRef>(ele.Cannon);
+
+                    em.SetComponentData(ele.Cannon, new CanonBallRef {Canonball = canonballEntities[j]});
+                    /*var CanonBall = em.GetComponentData<CanonBallRef>(ele.Cannon);
                     var CanonBallTransform = em.GetComponentData<LocalTransform>(CanonBall.Canonball);
 
                     float2 CanonBallXZ = rng.NextFloat2(
@@ -110,7 +133,7 @@ public partial struct ShipSpawnSystem : ISystem
 
                     var canonBallPos = new float3(CanonBallXZ.x, -2f, CanonBallXZ.y);
                     CanonBallTransform = new LocalTransform{Position = canonBallPos, Rotation = quaternion.identity, Scale = 1f};
-                    em.SetComponentData(CanonBall.Canonball, CanonBallTransform);
+                    em.SetComponentData(CanonBall.Canonball, CanonBallTransform);*/
                 }
 
                 j++;
@@ -119,7 +142,7 @@ public partial struct ShipSpawnSystem : ISystem
             seed += 1;
             //Debug.Log(team);
         }
-
+        canonballEntities.Dispose();
         entities.Dispose();
     }
 }

@@ -140,7 +140,7 @@ public partial struct CalcAimTargetJob : IJobEntity
 
                 aim.HasTarget      = true;
                 aim.TargetPosition = bestTarget;
-                aim.ShootTimeLeft  = CannonConfig.CannonballLifeTime;
+                aim.ShootTimeLeft  = CannonConfig.ShootWarmupTime;;
             }
         }
 

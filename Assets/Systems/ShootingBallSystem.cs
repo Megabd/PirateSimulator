@@ -21,17 +21,16 @@ partial struct ShootingBallSystem : ISystem
     {
         var config = SystemAPI.GetSingleton<Config>();
         var ecbSingleton = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>();
-        var ecb = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter();
         var ballXform = SystemAPI.GetComponent<LocalTransform>(config.CannonBallPrefab);
         float dt = SystemAPI.Time.DeltaTime;
 
         if (config.ScheduleParallel)
         {
-            state.Dependency = new ShootingBallJob
+            state.Dependency = new ShootingBallParallelJob
             {
                 dt = dt,
                 config = config,
-                ecb = ecb,
+                ecb = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter(),
                 ballXform = ballXform,
             }.ScheduleParallel(state.Dependency);
         }
@@ -42,7 +41,7 @@ partial struct ShootingBallSystem : ISystem
             {
                 dt = dt,
                 config = config,
-                ecb = ecb,
+                ecb = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged),
                 ballXform = ballXform,
             }.Schedule(state.Dependency);
         }
@@ -121,46 +120,101 @@ public partial struct ShootingBallJob : IJobEntity
 
     public Config config;
 
+    public EntityCommandBuffer ecb;
+    public LocalTransform ballXform;
+
+    void Execute(Entity e, in LocalTransform transform, ref RotationComponent rotation, ref Aim aim, in LocalToWorld worldPos, ref PrevPosComponent prevPos, ref CanonBallRef ball)
+    {
+        float3 currentPos = worldPos.Position;
+        float3 cannonVel = (currentPos - prevPos.PrePos) / dt; // world-space velocity
+        prevPos.PrePos = currentPos; // store for next frame
+
+        // No target, no warmup, no shot
+        if (!aim.HasTarget)
+        {
+            aim.ShootTimeLeft = 0f;
+            return;
+        }
+
+        // Count down the warmup timer
+        aim.ShootTimeLeft -= dt;
+        if (aim.ShootTimeLeft > 0f)
+        {
+            // still winding up, don't shoot yet
+            return;
+        }
+        
+        // spawn at cannon position
+        //Debug.Log(ball.Canonball.CanonBalls.Lifetime);
+        //Debug.Log(ecb.HasComponent<CannonBalls>(CanonBallRef.Canonball));
+        ballXform.Position = currentPos;
+        ballXform.Rotation = transform.Rotation; // local rotation of cannon entity
+        ecb.SetComponent(ball.Canonball, ballXform);
+        ecb.SetComponent(ball.Canonball, new PendingDestroyTag {destroy = false});
+
+        // ball inherits cannon velocity + its own shooting speed
+        float3 dir = math.normalize(worldPos.Forward);
+        ecb.SetComponent(ball.Canonball, new CannonBalls
+        {
+            Velocity = cannonVel + dir * CannonConfig.CannonballSpeed,
+            Lifetime = CannonConfig.CannonballLifeTime,
+            Radius = 0.5f //canonball hitbox
+        });
+
+        aim.HasTarget = false;
+        rotation.desiredPosition = float3.zero;
+    }
+}
+
+[BurstCompile]
+public partial struct ShootingBallParallelJob : IJobEntity
+{
+    public float dt;
+
+    public Config config;
+
     public EntityCommandBuffer.ParallelWriter ecb;
     public LocalTransform ballXform;
 
     void Execute([EntityIndexInQuery] int entityInQueryIndex, Entity e, in LocalTransform transform, ref RotationComponent rotation, ref Aim aim, in LocalToWorld worldPos, ref PrevPosComponent prevPos, ref CanonBallRef ball)
     {
         float3 currentPos = worldPos.Position;
-            float3 cannonVel = (currentPos - prevPos.PrePos) / dt; // world-space velocity
-            prevPos.PrePos = currentPos; // store for next frame
+        float3 cannonVel = (currentPos - prevPos.PrePos) / dt; // world-space velocity
+        prevPos.PrePos = currentPos; // store for next frame
 
-            // No target, no warmup, no shot
-            if (!aim.HasTarget)
-            {
-                aim.ShootTimeLeft = 0f;
-                return;
-            }
+        // No target, no warmup, no shot
+        if (!aim.HasTarget)
+        {
+            aim.ShootTimeLeft = 0f;
+            return;
+        }
 
-            // Count down the warmup timer
-            aim.ShootTimeLeft -= dt;
-            if (aim.ShootTimeLeft > 0f)
-            {
-                // still winding up, don't shoot yet
-                return;
-            }
-            
+        // Count down the warmup timer
+        aim.ShootTimeLeft -= dt;
+        if (aim.ShootTimeLeft > 0f)
+        {
+            // still winding up, don't shoot yet
+            return;
+        }
+        
+        // spawn at cannon position
+        //Debug.Log(ball.Canonball.CanonBalls.Lifetime);
+        //Debug.Log(ecb.HasComponent<CannonBalls>(CanonBallRef.Canonball));
+        ballXform.Position = currentPos;
+        ballXform.Rotation = transform.Rotation; // local rotation of cannon entity
+        ecb.SetComponent(entityInQueryIndex, ball.Canonball, ballXform);
+        ecb.RemoveComponent<PendingDestroyTag>(entityInQueryIndex, e);
 
-            // spawn at cannon position
-            ballXform.Position = currentPos;
-            ballXform.Rotation = transform.Rotation; // local rotation of cannon entity
-            ecb.SetComponent(entityInQueryIndex, ball.Canonball, ballXform);
+        // ball inherits cannon velocity + its own shooting speed
+        float3 dir = math.normalize(worldPos.Forward);
+        ecb.SetComponent(entityInQueryIndex, ball.Canonball, new CannonBalls
+        {
+            Velocity = cannonVel + dir * CannonConfig.CannonballSpeed,
+            Lifetime = CannonConfig.CannonballLifeTime,
+            Radius = 0.5f //canonball hitbox
+        });
 
-            // ball inherits cannon velocity + its own shooting speed
-            float3 dir = math.normalize(worldPos.Forward);
-            ecb.SetComponent(entityInQueryIndex, ball.Canonball, new CannonBalls
-            {
-                Velocity = cannonVel + dir * CannonConfig.CannonballSpeed,
-                Lifetime = CannonConfig.CannonballLifeTime,
-                Radius = 0.5f //canonball hitbox
-            });
-
-            aim.HasTarget = false;
-            rotation.desiredPosition = float3.zero;
+        aim.HasTarget = false;
+        rotation.desiredPosition = float3.zero;
     }
 }
