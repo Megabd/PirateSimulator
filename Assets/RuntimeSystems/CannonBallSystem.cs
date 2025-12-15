@@ -28,15 +28,16 @@ public partial struct CannonBallSystem : ISystem
         };
 
         if (config.ScheduleParallel){
-            job.ScheduleParallel();
+            state.Dependency = job.ScheduleParallel(state.Dependency);
         }
 
         else if (config.Schedule)
         {
-            job.Schedule();
+            state.Dependency = job.Schedule(state.Dependency);
         }
         else
         {
+            state.Dependency.Complete();
             job.Run();
         }
     }
