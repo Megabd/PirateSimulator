@@ -2,9 +2,7 @@ using Unity.Burst;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
-using UnityEngine;
 
-// Optional: keep it in the same group as your other systems
 [UpdateInGroup(typeof(SimulationSystemGroup))]
 public partial struct ShipRespawnSystem : ISystem
 {
@@ -16,7 +14,6 @@ public partial struct ShipRespawnSystem : ISystem
         state.RequireForUpdate<HealthComponent>();
         state.RequireForUpdate<Config>();
 
-        // Initial seed
         _baseRandomSeed = 0x6E624EB7u;
     }
 
@@ -51,17 +48,15 @@ public partial struct ShipRespawnSystem : ISystem
     public void OnDestroy(ref SystemState state) { }
 }
 
+// Each ship woth 0 health is reset health and place at the edge of the map
 [BurstCompile]
 public partial struct ShipRespawnJob : IJobEntity
 {
     public uint baseSeed;
-    void Execute([EntityIndexInQuery] int entityInQueryIndex,ref HealthComponent health, ref LocalTransform transform)
+    void Execute([EntityIndexInQuery] int entityInQueryIndex, ref HealthComponent health, ref LocalTransform transform)
     {
         if (health.health > 0) return;
-        // "Respawn": reset health
         health.health = health.startingHealth;
-
-        // Per-entity RNG, safe for parallel
         var rng = Unity.Mathematics.Random.CreateFromIndex(baseSeed + (uint)entityInQueryIndex);
 
         int side = rng.NextInt(0, 4);

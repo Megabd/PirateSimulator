@@ -40,8 +40,8 @@ public struct AvoidanceState : IComponentData
 
 public struct Aim : IComponentData
 {
-    public float NextRaycastTime;     // absolute time when we may raycast again
-    public float ShootTimeLeft; // counts down after target acquired
+    public float NextRaycastTime;
+    public float ShootTimeLeft; 
 
     public bool HasTarget; 
     public float3 TargetPosition;
