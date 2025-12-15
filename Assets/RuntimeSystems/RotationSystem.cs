@@ -2,8 +2,6 @@ using Unity.Burst;
 using Unity.Entities;
 using Unity.Transforms;
 using Unity.Mathematics;
-using UnityEngine;
-using UnityEngine.LightTransport;
 using Unity.Collections;
 
 [UpdateInGroup(typeof(SimulationSystemGroup))]
@@ -50,7 +48,7 @@ partial struct RotationSystem : ISystem
 
 
 
-
+// Rotates toward target given for ships and cannons. 
 [BurstCompile]
 public partial struct RotationJob : IJobEntity
 {
@@ -67,7 +65,6 @@ public partial struct RotationJob : IJobEntity
         float maxAngle = rotation.maxTurnAngle;
         float turnSpeed = rotation.turnSpeed;
 
-        // Compute parent world rotation and our world position
         quaternion parentWorldRot = quaternion.identity;
         float3 worldPos;
 

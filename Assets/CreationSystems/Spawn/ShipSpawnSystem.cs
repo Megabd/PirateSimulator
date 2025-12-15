@@ -107,7 +107,6 @@ public partial struct ShipSpawnSystem : ISystem
             }
 
             seed += 1;
-            //Debug.Log(team);
         }
 
         entities.Dispose();

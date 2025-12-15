@@ -1,6 +1,4 @@
 using Unity.Entities;
-using Unity.Burst;
-using Unity.Transforms;
 using Unity.Mathematics;
 
 
@@ -11,12 +9,6 @@ public struct RotationComponent : IComponentData
     public float3 desiredPosition;
     public float maxTurnAngle;
     public quaternion startRotation;
-}
-
-public struct WindComponent : IComponentData 
-{
-    public float2 windDirection;
-    public float power;
 }
 
 public struct TeamComponent : IComponentData
@@ -48,11 +40,22 @@ public struct AvoidanceState : IComponentData
 
 public struct Aim : IComponentData
 {
-    public float NextRaycastTime;     // absolute time when we may raycast again
-    public float ShootTimeLeft; // counts down after target acquired
+    public float NextRaycastTime;
+    public float ShootTimeLeft; 
 
     public bool HasTarget; 
     public float3 TargetPosition;
 }
 
+public struct HealthComponent : IComponentData
+{
+    public int health;
+    public int startingHealth;
+}
 
+public struct CannonBalls : IComponentData
+{
+    public float3 Velocity;
+    public float Lifetime;
+    public float Radius;
+}
