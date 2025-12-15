@@ -1,15 +1,9 @@
-using NUnit.Framework.Internal;
-using System.Security.Principal;
-using TMPro;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Physics;
 using Unity.Transforms;
-using UnityEngine;
-using UnityEngine.SocialPlatforms.Impl;
-using UnityEngine.Windows;
 
 partial struct CalcPositionTarget : ISystem
 {
@@ -36,10 +30,8 @@ partial struct CalcPositionTarget : ISystem
 
         var transformLookup = SystemAPI.GetComponentLookup<LocalTransform>(true);
         var teamLookup = SystemAPI.GetComponentLookup<TeamComponent>(true);
-        //var ltwLookup = SystemAPI.GetComponentLookup<LocalToWorld>(true); error here
 
         var config = SystemAPI.GetSingleton<Config>();
-
 
         var job =
         new CalcPositionTargetJob
@@ -60,15 +52,11 @@ partial struct CalcPositionTarget : ISystem
         else if (config.Schedule)
         {
             state.Dependency = job.Schedule(state.Dependency);
-
         }
 
         else {
-
             job.Run();
         }
-        
-
     }
 
     [BurstCompile]
@@ -79,7 +67,7 @@ partial struct CalcPositionTarget : ISystem
 }
 
 
-
+// Calculates the target position for the ships. Every few seconds, it checkes enemies and allies in 4 directions, choosing one with most allies, but at least one enemies.
 [BurstCompile]
 public partial struct CalcPositionTargetJob : IJobEntity
 {
@@ -89,13 +77,10 @@ public partial struct CalcPositionTargetJob : IJobEntity
 
     [ReadOnly]
     public PhysicsWorld physicsWorld;
-
     [ReadOnly]
     public ComponentLookup<TeamComponent> teamLookup;
     [ReadOnly]
     public ComponentLookup<LocalTransform> transformLookup;
-
-    
 
     void Execute(Entity e,  ref RotationComponent rotation, ref LocalToWorld toWorld, ref CooldownTimer timer)
     {
@@ -110,7 +95,6 @@ public partial struct CalcPositionTargetJob : IJobEntity
         float3 pos = transform.Position;
         float3 currentTarget = rotation.desiredPosition;
 
-        //baldur kode
         float3 fwd = math.normalize(new float3(transform.Forward().x, 0, transform.Forward().z));
         float3 right = math.normalize(math.cross(new float3(0, 1, 0), fwd));
 
@@ -153,7 +137,6 @@ public partial struct CalcPositionTargetJob : IJobEntity
 
                 float3 p = otherTransform.Position;
 
-                // same sample logic as before
                 float3 d0 = p - s0;
                 bool3 check = d0 <= float3.zero;
                 if (check.x && check.y && check.z)

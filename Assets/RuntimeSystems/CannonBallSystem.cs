@@ -2,8 +2,6 @@ using Unity.Burst;
 using Unity.Entities;
 using Unity.Transforms;
 using Unity.Physics.Systems;
-using System.ComponentModel;
-using Unity.Collections;
 
 [BurstCompile]
 [UpdateInGroup(typeof(FixedStepSimulationSystemGroup))]
@@ -23,37 +21,27 @@ public partial struct CannonBallSystem : ISystem
         var ecbSingleton = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
         var config = SystemAPI.GetSingleton<Config>();
 
+        var job = new CannonBallMoveJob
+        {
+            ECB = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter(),
+            DeltaTime = DeltaTime
+        };
+
         if (config.ScheduleParallel){
-            new CannonBallMoveJob
-            {
-                ECB = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter(),
-                DeltaTime = SystemAPI.Time.DeltaTime
-            }.ScheduleParallel();
+            job.ScheduleParallel();
         }
 
         else if (config.Schedule)
         {
-            new CannonBallMoveJob
-            {
-                ECB = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter(),
-                DeltaTime = SystemAPI.Time.DeltaTime
-            }.Schedule();
+            job.Schedule();
         }
         else
         {
-            var ECB = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged);
-            foreach (var (ball, transform, entity)
-                    in SystemAPI.Query<RefRW<CannonBalls>, RefRW<LocalTransform>>().WithEntityAccess())
-            {
-            transform.ValueRW.Position += ball.ValueRO.Velocity * DeltaTime;
-
-            ball.ValueRW.Lifetime -= DeltaTime;
-            if (ball.ValueRO.Lifetime <= 0f) ECB.AddComponent<PendingDestroyTag>(entity);
-            }
+            job.Run();
+        }
     }
 }
-}
-
+// Moves the cannonball and checks if its time has run out
 [BurstCompile]
 public partial struct CannonBallMoveJob : IJobEntity
 {

@@ -1,11 +1,9 @@
 ﻿using Unity.Burst;
-using Unity.Burst.Intrinsics;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Physics;
 using Unity.Transforms;
-using UnityEngine;
 
 [BurstCompile]
 
@@ -70,12 +68,13 @@ partial struct CalcAimTarget : ISystem
     public void OnDestroy(ref SystemState state) { }
 }
 
+// Finds target for cannons. Raycast and lock on to enemy hit, start shooting warmup.
 [BurstCompile]
 public partial struct CalcAimTargetJob : IJobEntity
 {
     public CollisionFilter filter;
-    public float dt;                // for ShootTimeLeft etc, if needed
-    public float elapsedTime;       // absolute time this frame
+    public float dt;                
+    public float elapsedTime;      
     public Unity.Mathematics.Random rand;
 
     [ReadOnly] public PhysicsWorld physicsWorld;
@@ -84,18 +83,16 @@ public partial struct CalcAimTargetJob : IJobEntity
 
     void Execute(Entity e, ref RotationComponent rotation, in LocalToWorld toWorld, ref Aim aim)
     {
-        // Let rotation always follow current target if we have one
+        // Follow current target if we have one
         if (aim.HasTarget)
         {
             rotation.desiredPosition = aim.TargetPosition;
             return;
         }
 
-        // Not yet time to raycast again for this cannon
+        // Skip timer
         if (elapsedTime < aim.NextRaycastTime)
             return;
-
-        // Decide the next time *before* doing the raycast, so even failed casts keep cadence.
         aim.NextRaycastTime = elapsedTime + rand.NextFloat(0.4f, 0.8f);
 
         float3 pos     = toWorld.Position;

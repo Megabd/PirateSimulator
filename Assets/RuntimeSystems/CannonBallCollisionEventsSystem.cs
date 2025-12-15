@@ -3,10 +3,7 @@ using Unity.Collections;
 using Unity.Entities;
 using Unity.Physics;
 using Unity.Physics.Systems;
-using Unity.VisualScripting;
-using UnityEngine;
 
-// Runs during physics so we see collision events
 [BurstCompile]
 [UpdateInGroup(typeof(FixedStepSimulationSystemGroup))]
 [UpdateAfter(typeof(PhysicsSystemGroup))]
@@ -19,10 +16,9 @@ public partial struct CannonBallCollisionEventsSystem : ISystem
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
-        // Ensure physics is present and we have cannonballs at all
         state.RequireForUpdate<SimulationSingleton>();
         state.RequireForUpdate<CannonBalls>();
-        state.RequireForUpdate<Config>(); // use your global config
+        state.RequireForUpdate<Config>(); 
 
         _ballLookup = state.GetComponentLookup<CannonBalls>(true);
         _shipLookup = state.GetComponentLookup<ShipAuthoring.Ship>(false);
@@ -36,7 +32,6 @@ public partial struct CannonBallCollisionEventsSystem : ISystem
         _shipLookup.Update(ref state);
         _healthLookup.Update(ref state);
 
-        
         var sim = SystemAPI.GetSingleton<SimulationSingleton>();
         var ecbSingleton = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
         var config = SystemAPI.GetSingleton<Config>();
@@ -60,7 +55,7 @@ public partial struct CannonBallCollisionEventsSystem : ISystem
         else if (config.Schedule)
         {
             var ecb = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged);
-            var job = new CannonBallTriggerEventJob // scheduled version
+            var job = new CannonBallTriggerEventJob
             {
                 BallLookup = _ballLookup,
                 ShipLookup = _shipLookup,
@@ -135,8 +130,6 @@ public struct CannonBallTriggerEventJob : ITriggerEventsJob
         HealthLookup[ship] = health;
 
         ECB.AddComponent<PendingDestroyTag>(ball);
-        //destroy the ball
-        //ECB.DestroyEntity(ball);
 
     }
 

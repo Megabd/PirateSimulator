@@ -1,5 +1,4 @@
 using Unity.Burst;
-using Unity.Collections;
 using Unity.Entities;
 
 [BurstCompile]
@@ -18,6 +17,7 @@ public partial struct DestroyPendingBallsSystem : ISystem
         var config = SystemAPI.GetSingleton<Config>();
         var ecbSingleton = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
         var ecb = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged);
+
 
         if (config.ScheduleParallel)
         {
@@ -39,7 +39,6 @@ public partial struct DestroyPendingBallsSystem : ISystem
         }
         else
         {
-            // Simple main-thread fallback
             var job = new DestroyPendingBallsJob
             {
                 ECB = ecb
@@ -53,6 +52,7 @@ public partial struct DestroyPendingBallsSystem : ISystem
     public void OnDestroy(ref SystemState state) { }
 }
 
+// Destroys cannonballs marked for death, either by lifetime or hitting
 [BurstCompile]
 public partial struct DestroyPendingBallsJob : IJobEntity
 {
