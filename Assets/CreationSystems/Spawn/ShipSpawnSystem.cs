@@ -76,19 +76,6 @@ public partial struct ShipSpawnSystem : ISystem
             // Apply team component to each cannon entity
             foreach (var ele in cannonBuffer)
             {
-                quaternion lol;
-                quaternion test;
-                if (j < 3)
-                {
-                    test = quaternion.Euler(0, 0, math.radians(-90f));
-                    lol = math.mul(fix, test);
-                }
-                else
-                {
-                    test = quaternion.Euler(0, 0f, math.radians(-90f));
-                    lol = math.mul(fix, test);
-                }
-
                 // Set team on the cannon
                 em.SetComponentData(ele.Cannon, new TeamComponent { redTeam = team });
 
