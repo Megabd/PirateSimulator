@@ -129,7 +129,7 @@ public partial struct CalcAimTargetJob : IJobEntity
             {
                 float3 moveDir    = otherTransform.Forward();
                 float3 targetVel  = moveDir * ShipConfig.ShipSpeed;
-                float timeToHit   = dist / CannonConfig.CannonballSpeed + CannonConfig.CannonballLifeTime;
+                float timeToHit   = dist / CannonConfig.CannonballSpeed + CannonConfig.ShootWarmupTime;
                 float3 predictedPos = targetPosNow + targetVel * timeToHit;
 
                 bestTarget = predictedPos;
