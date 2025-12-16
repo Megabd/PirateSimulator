@@ -11,6 +11,8 @@ public class ConfigAuthoring : MonoBehaviour
     public bool Schedule;
     public bool ScheduleParallel;
 
+    public float MapSize;
+
 
     class Baker : Baker<ConfigAuthoring>
     {
@@ -25,6 +27,7 @@ public class ConfigAuthoring : MonoBehaviour
                 ShipCount = authoring.ShipCount,
                 Schedule = authoring.Schedule,
                 ScheduleParallel = authoring.ScheduleParallel,
+                MapSize = authoring.MapSize
             });
         }
     }
@@ -37,7 +40,7 @@ public struct Config : IComponentData
     public int ShipCount;
     public bool Schedule;
     public bool ScheduleParallel;
-    public float2 MapSize;
+    public float MapSize;
 }
 
 public static class CannonConfig
@@ -53,10 +56,4 @@ public static class ShipConfig
     public const float ShipSpeed = 3f;
     public const float SenseRadius = 40f;
     public const float SenseOffset = 20f;
-}
-
-public struct SeaConfig
-{
-    public readonly static float halfWidth = 1000f;
-    public readonly static float halfHeight = 1000f;
 }

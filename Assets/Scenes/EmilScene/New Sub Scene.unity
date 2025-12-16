@@ -153,7 +153,8 @@ MonoBehaviour:
   SeaPrefab: {fileID: 1985540441516581328, guid: b2eac37d9afc5bd4a937d69ede33e7bf, type: 3}
   ShipCount: 5000
   Schedule: 0
-  ScheduleParallel: 0
+  ScheduleParallel: 1
+  MapSize: 500
 --- !u!4 &1409913257
 Transform:
   m_ObjectHideFlags: 0

@@ -20,8 +20,8 @@ public partial struct SeaSpawnSystem : ISystem
 
         float tileSize = 50f;
 
-        int tilesX = (int)math.ceil(SeaConfig.halfWidth*2 / tileSize) + 2;
-        int tilesZ = (int)math.ceil(SeaConfig.halfHeight*2 / tileSize) + 2;
+        int tilesX = (int)math.ceil(config.MapSize*2 / tileSize) + 2;
+        int tilesZ = (int)math.ceil(config.MapSize*2 / tileSize) + 2;
 
         float startX = -((tilesX * tileSize) * 0.5f);
         float startZ = -((tilesZ * tileSize) * 0.5f);
