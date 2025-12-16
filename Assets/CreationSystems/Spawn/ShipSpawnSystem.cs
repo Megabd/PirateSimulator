@@ -40,8 +40,8 @@ public partial struct ShipSpawnSystem : ISystem
                 team = true;
             }
             float2 xz = rng.NextFloat2(
-                new float2(-SeaConfig.halfWidth, -SeaConfig.halfHeight),
-                new float2(SeaConfig.halfWidth, SeaConfig.halfHeight));
+                new float2(-config.MapSize, -config.MapSize),
+                new float2(config.MapSize, config.MapSize));
 
             var pos = new float3(xz.x, 0f, xz.y);
             var tilt = quaternion.Euler(math.radians(90f), 0f, 0f);

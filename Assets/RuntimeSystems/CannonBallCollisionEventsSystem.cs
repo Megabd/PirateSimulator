@@ -3,6 +3,7 @@ using Unity.Collections;
 using Unity.Entities;
 using Unity.Physics;
 using Unity.Physics.Systems;
+using UnityEngine;
 
 [BurstCompile]
 [UpdateInGroup(typeof(FixedStepSimulationSystemGroup))]
@@ -109,18 +110,9 @@ public struct CannonBallTriggerEventJob : ITriggerEventsJob
         var a = triggerEvent.EntityA;
         var b = triggerEvent.EntityB;
 
-        bool aIsBall = BallLookup.HasComponent(a);
-        bool bIsBall = BallLookup.HasComponent(b);
 
-        if (!aIsBall && !bIsBall)
-            return;
-
-        // Ship hit by ball
-        if (aIsBall && ShipLookup.HasComponent(b))
-            HitShip(ball: a, ship: b);
-
-        else if (bIsBall && ShipLookup.HasComponent(a))
-            HitShip(ball: b, ship: a);
+        HitShip(ball: b, ship: a);
+            
     }
 
     void HitShip(Entity ball, Entity ship)
@@ -149,18 +141,10 @@ public struct CannonBallTriggerEventParallelJob : ITriggerEventsJob
     {
         var a = triggerEvent.EntityA;
         var b = triggerEvent.EntityB;
+        
 
-        bool aIsBall = BallLookup.HasComponent(a);
-        bool bIsBall = BallLookup.HasComponent(b);
-
-        if (!aIsBall && !bIsBall)
-            return;
-
-        if (aIsBall && ShipLookup.HasComponent(b))
-            HitShip(0, ball: a, ship: b);
-
-        else if (bIsBall && ShipLookup.HasComponent(a))
-            HitShip(0, ball: b, ship: a);
+        HitShip(0, ball: b, ship: a);
+            
     }
 
     void HitShip(int sortKey, Entity ball, Entity ship)

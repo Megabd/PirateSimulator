@@ -24,6 +24,7 @@ public partial struct ShipRespawnSystem : ISystem
 
         var job = new ShipRespawnJob
         {
+            config = config,
             baseSeed = _baseRandomSeed
         };
 
@@ -53,6 +54,8 @@ public partial struct ShipRespawnSystem : ISystem
 public partial struct ShipRespawnJob : IJobEntity
 {
     public uint baseSeed;
+
+    public Config config;
     void Execute([EntityIndexInQuery] int entityInQueryIndex, ref HealthComponent health, ref LocalTransform transform)
     {
         if (health.health > 0) return;
@@ -66,20 +69,20 @@ public partial struct ShipRespawnJob : IJobEntity
         switch (side)
         {
             case 0:
-                x = -SeaConfig.halfWidth;
-                z = rng.NextFloat(-SeaConfig.halfHeight, SeaConfig.halfHeight);
+                x = -config.MapSize;
+                z = rng.NextFloat(-config.MapSize, config.MapSize);
                 break;
             case 1:
-                x = SeaConfig.halfWidth;
-                z = rng.NextFloat(-SeaConfig.halfHeight, SeaConfig.halfHeight);
+                x = config.MapSize;
+                z = rng.NextFloat(-config.MapSize, config.MapSize);
                 break;
             case 2:
-                z = -SeaConfig.halfHeight;
-                x = rng.NextFloat(-SeaConfig.halfWidth, SeaConfig.halfWidth);
+                z = -config.MapSize;
+                x = rng.NextFloat(-config.MapSize, config.MapSize);
                 break;
             case 3:
-                z = SeaConfig.halfHeight;
-                x = rng.NextFloat(-SeaConfig.halfWidth, SeaConfig.halfWidth);
+                z = config.MapSize;
+                x = rng.NextFloat(-config.MapSize, config.MapSize);
                 break;
         }
 

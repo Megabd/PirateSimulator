@@ -32,8 +32,7 @@ partial struct AvoidShipCollisionSystem : ISystem
         var job = new AvoidShipCollionJob
         {
             dt = dt,
-            halfWidth = SeaConfig.halfWidth,
-            halfHeight = SeaConfig.halfHeight,
+            config = config,
             transformLookup = transformLookup,
             filter = filter,
             physicsWorld = physicsWorld
@@ -67,8 +66,9 @@ public partial struct AvoidShipCollionJob : IJobEntity
 
     public float dt;
 
-    public float halfWidth;
-    public float halfHeight;
+    [ReadOnly]
+    public Config config;
+
     [ReadOnly]
     public ComponentLookup<LocalTransform> transformLookup;
 
@@ -174,8 +174,8 @@ public partial struct AvoidShipCollionJob : IJobEntity
 
         if (avoidance.Active)
         {
-            avoidance.Target.x = math.clamp(avoidance.Target.x, -halfWidth, halfWidth);
-            avoidance.Target.z = math.clamp(avoidance.Target.z, -halfHeight, halfHeight);
+            avoidance.Target.x = math.clamp(avoidance.Target.x, -config.MapSize, config.MapSize);
+            avoidance.Target.z = math.clamp(avoidance.Target.z, -config.MapSize, config.MapSize);
             rotation.desiredPosition = avoidance.Target;
         }
         hits.Dispose();
