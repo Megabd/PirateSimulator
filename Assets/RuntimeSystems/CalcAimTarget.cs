@@ -4,6 +4,7 @@ using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Physics;
 using Unity.Transforms;
+using UnityEngine;
 
 [BurstCompile]
 
@@ -81,7 +82,7 @@ public partial struct CalcAimTargetJob : IJobEntity
     [ReadOnly] public ComponentLookup<TeamComponent> teamLookup;
     [ReadOnly] public ComponentLookup<LocalTransform> transformLookup;
 
-    void Execute(Entity e, ref RotationComponent rotation, in LocalToWorld toWorld, ref Aim aim)
+    void Execute(ref RotationComponent rotation, in LocalToWorld toWorld, ref Aim aim, in TeamComponent team)
     {
         // Follow current target if we have one
         if (aim.HasTarget)
@@ -108,18 +109,17 @@ public partial struct CalcAimTargetJob : IJobEntity
 
         if (physicsWorld.CastRay(rayInput, out Unity.Physics.RaycastHit hit))
         {
+
             var hitEntity = physicsWorld.Bodies[hit.RigidBodyIndex].Entity;
 
             var teamComp = teamLookup[hitEntity];
-            var team     = teamLookup[e];
-
             if (teamComp.redTeam == team.redTeam)
             {
                 rotation.desiredPosition = bestTarget;
                 return;
             }
 
-            var otherTransform = transformLookup[hitEntity];
+             var otherTransform = transformLookup[hitEntity];
 
             float3 targetPosNow = otherTransform.Position;
             float3 toTarget     = targetPosNow - pos;

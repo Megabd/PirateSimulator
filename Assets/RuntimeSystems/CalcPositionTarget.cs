@@ -4,6 +4,7 @@ using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Physics;
 using Unity.Transforms;
+using static UnityEngine.Rendering.STP;
 
 partial struct CalcPositionTarget : ISystem
 {
@@ -37,6 +38,7 @@ partial struct CalcPositionTarget : ISystem
         new CalcPositionTargetJob
         {
             dt = dt,
+            config = config,
             filter = filter,
             physicsWorld = physicsWorld,
             teamLookup = teamLookup,
@@ -74,6 +76,7 @@ public partial struct CalcPositionTargetJob : IJobEntity
     public float dt;
     public Unity.Mathematics.Random rand;
     public CollisionFilter filter;
+    public Config config;
 
     [ReadOnly]
     public PhysicsWorld physicsWorld;
@@ -104,6 +107,8 @@ public partial struct CalcPositionTargetJob : IJobEntity
         float3 s1 = pos - right * offset; // left
         float3 s2 = pos + right * offset; // right
         float3 s3 = pos - fwd * offset; // back
+
+
 
         int4 allyCounts = 0;
         bool4 hasEnemy = false;
@@ -174,13 +179,15 @@ public partial struct CalcPositionTargetJob : IJobEntity
                 }
             }
                 // choose best direction
-                float3 chosen = s0;
+                float3 chosen = new float3(0f, 0f, 1f);
+
                 int best = -1;
                 if (hasEnemy.x && allyCounts.x > best) { chosen = s0; best = allyCounts.x; }
                 if (hasEnemy.y && allyCounts.y > best) { chosen = s1; best = allyCounts.y; }
                 if (hasEnemy.z && allyCounts.z > best) { chosen = s2; best = allyCounts.z; }
                 if (hasEnemy.w && allyCounts.w > best) { chosen = s3; best = allyCounts.w; }
-
+                chosen.x = math.clamp(chosen.x, -config.MapSize, config.MapSize);
+                chosen.z = math.clamp(chosen.z, -config.MapSize, config.MapSize);
                 rotation.desiredPosition = chosen;
                 timer.TimeLeft = rand.NextFloat(5f, 10f);
                 }

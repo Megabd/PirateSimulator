@@ -1,7 +1,9 @@
+
 using Unity.Burst;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
+using UnityEngine;
 
 [BurstCompile]
 public partial struct SeaSpawnSystem : ISystem
@@ -20,8 +22,8 @@ public partial struct SeaSpawnSystem : ISystem
 
         float tileSize = 50f;
 
-        int tilesX = (int)math.ceil(config.MapSize*2 / tileSize) + 2;
-        int tilesZ = (int)math.ceil(config.MapSize*2 / tileSize) + 2;
+        int tilesX = (int)math.ceil(config.MapSize*2 / tileSize);
+        int tilesZ = (int)math.ceil(config.MapSize*2 / tileSize);
 
         float startX = -((tilesX * tileSize) * 0.5f);
         float startZ = -((tilesZ * tileSize) * 0.5f);
@@ -30,8 +32,8 @@ public partial struct SeaSpawnSystem : ISystem
         {
             for (int z = 0; z < tilesZ; z++)
             {
-                float posX = startX + x * tileSize;
-                float posZ = startZ + z * tileSize;
+                float posX = startX + x * tileSize + tileSize * 0.5f;
+                float posZ = startZ + z * tileSize + tileSize * 0.5f;
 
                 Entity seaTile = em.Instantiate(config.SeaPrefab);
                 em.SetComponentData(seaTile,

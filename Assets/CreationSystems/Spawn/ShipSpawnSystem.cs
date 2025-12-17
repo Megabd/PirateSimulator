@@ -4,7 +4,6 @@ using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Rendering;
 using Unity.Transforms;
-using UnityEngine;
 
 public partial struct ShipSpawnSystem : ISystem
 {
@@ -44,9 +43,7 @@ public partial struct ShipSpawnSystem : ISystem
                 new float2(config.MapSize, config.MapSize));
 
             var pos = new float3(xz.x, 0f, xz.y);
-            var tilt = quaternion.Euler(math.radians(90f), 0f, 0f);
-            var yaw = quaternion.RotateY(0);
-            quaternion fix = math.mul(yaw, tilt);
+
             em.SetComponentData(entities[i],
                 LocalTransform.FromPositionRotationScale(pos, quaternion.identity, 1f));
             em.SetComponentData(entities[i],
@@ -71,7 +68,6 @@ public partial struct ShipSpawnSystem : ISystem
 
 
             var cannonBuffer = em.GetBuffer<ShipAuthoring.CannonElement>(entities[i]);
-            int j = 0;
 
             // Apply team component to each cannon entity
             foreach (var ele in cannonBuffer)
@@ -89,9 +85,9 @@ public partial struct ShipSpawnSystem : ISystem
 
                     em.SetComponentData(ele.Cannon, aim);
                 }
-
-                j++;
             }
+
+
 
             seed += 1;
         }

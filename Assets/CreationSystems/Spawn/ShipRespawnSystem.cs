@@ -56,36 +56,26 @@ public partial struct ShipRespawnJob : IJobEntity
     public uint baseSeed;
 
     public Config config;
-    void Execute([EntityIndexInQuery] int entityInQueryIndex, ref HealthComponent health, ref LocalTransform transform)
+    void Execute([EntityIndexInQuery] int entityInQueryIndex, ref HealthComponent health, ref LocalTransform transform, ref RotationComponent rotation, ref CooldownTimer timer, ref TeamComponent team)
     {
         if (health.health > 0) return;
         health.health = health.startingHealth;
         var rng = Unity.Mathematics.Random.CreateFromIndex(baseSeed + (uint)entityInQueryIndex);
-
-        int side = rng.NextInt(0, 4);
         float x = 0f;
         float z = 0f;
-
-        switch (side)
+        if (team.redTeam)
         {
-            case 0:
-                x = -config.MapSize;
-                z = rng.NextFloat(-config.MapSize, config.MapSize);
-                break;
-            case 1:
-                x = config.MapSize;
-                z = rng.NextFloat(-config.MapSize, config.MapSize);
-                break;
-            case 2:
-                z = -config.MapSize;
-                x = rng.NextFloat(-config.MapSize, config.MapSize);
-                break;
-            case 3:
-                z = config.MapSize;
-                x = rng.NextFloat(-config.MapSize, config.MapSize);
-                break;
+            x = -config.MapSize * 1.1f;
+            z = rng.NextFloat(-config.MapSize, config.MapSize);
+        }
+        else
+        {
+            x = config.MapSize * 1.1f;
+            z = rng.NextFloat(-config.MapSize, config.MapSize);
         }
 
         transform.Position = new float3(x, 0f, z);
+        timer.TimeLeft = 20f;
+        rotation.desiredPosition = new float3(0f, 0f, 1f);
     }
 }

@@ -36,8 +36,8 @@ public class ShipAuthoring : MonoBehaviour
                 EDBoat = GetEntity(authoring.EDBoat, TransformUsageFlags.Dynamic)
             });
             AddComponent(entity, new RotationComponent { turnSpeed = 60.0f, desiredPosition = new float3(1.0f, 0.0f, 1.0f), maxTurnAngle = 360.0f});
-            AddComponent(entity, new HealthComponent { health = 50, startingHealth = 50});
-            AddComponent(entity, new TeamComponent { redTeam = true });
+            AddComponent(entity, new HealthComponent { health = 100, startingHealth = 100});
+            AddComponent(entity, new TeamComponent { redTeam = true});
             AddComponent(entity, new CooldownTimer { TimeLeft = 1.0f });
             AddComponent(entity, new CollisionScanTimer{ TimeLeft = 2f, Interval = 2f});
             AddComponent(entity, new AvoidanceState{Active = false,Target = float3.zero});
