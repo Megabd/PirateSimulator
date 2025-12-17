@@ -34,6 +34,7 @@ partial struct CalcAimTarget : ISystem
 
         var teamLookup      = SystemAPI.GetComponentLookup<TeamComponent>(true);
         var transformLookup = SystemAPI.GetComponentLookup<LocalTransform>(true);
+        var shipSenseLookup = SystemAPI.GetComponentLookup<ShipSense>(true);
 
         float dt = SystemAPI.Time.DeltaTime;
         float elapsedTime = (float)SystemAPI.Time.ElapsedTime;
@@ -47,6 +48,7 @@ partial struct CalcAimTarget : ISystem
             physicsWorld = physicsWorld,
             transformLookup = transformLookup,
             teamLookup = teamLookup,
+            shipSenseLookup = shipSenseLookup,
             rand = rand
         };
 
@@ -81,8 +83,9 @@ public partial struct CalcAimTargetJob : IJobEntity
     [ReadOnly] public PhysicsWorld physicsWorld;
     [ReadOnly] public ComponentLookup<TeamComponent> teamLookup;
     [ReadOnly] public ComponentLookup<LocalTransform> transformLookup;
+    [ReadOnly] public ComponentLookup<ShipSense> shipSenseLookup;
 
-    void Execute(ref RotationComponent rotation, in LocalToWorld toWorld, ref Aim aim, in TeamComponent team)
+    void Execute(ref RotationComponent rotation, in LocalToWorld toWorld, ref Aim aim, in TeamComponent team, in CannonData data)
     {
         // Follow current target if we have one
         if (aim.HasTarget)
@@ -103,7 +106,7 @@ public partial struct CalcAimTargetJob : IJobEntity
         RaycastInput rayInput = new RaycastInput
         {
             Start  = pos,
-            End    = pos + forward * CannonConfig.SenseDistance,
+            End    = pos + forward * data.SenseDistance,
             Filter = filter
         };
 
@@ -128,15 +131,15 @@ public partial struct CalcAimTargetJob : IJobEntity
             if (dist > 0f)
             {
                 float3 moveDir    = otherTransform.Forward();
-                float3 targetVel  = moveDir * ShipConfig.ShipSpeed;
-                float timeToHit   = dist / CannonConfig.CannonballSpeed + CannonConfig.ShootWarmupTime;
+                float3 targetVel  = moveDir * shipSenseLookup[hitEntity].ShipSpeed;
+                float timeToHit   = dist / data.CannonballSpeed + data.ShootWarmupTime;
                 float3 predictedPos = targetPosNow + targetVel * timeToHit;
 
                 bestTarget = predictedPos;
 
                 aim.HasTarget      = true;
                 aim.TargetPosition = bestTarget;
-                aim.ShootTimeLeft  = CannonConfig.ShootWarmupTime;
+                aim.ShootTimeLeft  = data.ShootWarmupTime;
             }
         }
 

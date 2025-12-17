@@ -85,7 +85,7 @@ public partial struct CalcPositionTargetJob : IJobEntity
     [ReadOnly]
     public ComponentLookup<LocalTransform> transformLookup;
 
-    void Execute(Entity e,  ref RotationComponent rotation, ref LocalToWorld toWorld, ref CooldownTimer timer)
+    void Execute(Entity e,  ref RotationComponent rotation, ref LocalToWorld toWorld, ref CooldownTimer timer, in ShipSense sense)
     {
         timer.TimeLeft -= dt;
         if (timer.TimeLeft > 0f)
@@ -101,7 +101,7 @@ public partial struct CalcPositionTargetJob : IJobEntity
         float3 fwd = math.normalize(new float3(transform.Forward().x, 0, transform.Forward().z));
         float3 right = math.normalize(math.cross(new float3(0, 1, 0), fwd));
 
-        float offset = ShipConfig.SenseOffset;
+        float offset = sense.SenseOffset;
 
         float3 s0 = pos + fwd * offset; // forward
         float3 s1 = pos - right * offset; // left
@@ -116,7 +116,7 @@ public partial struct CalcPositionTargetJob : IJobEntity
         var input = new PointDistanceInput
         {
             Position = pos,
-            MaxDistance = ShipConfig.SenseRadius,
+            MaxDistance = sense.SenseRadius,
             Filter = filter
         };
         hits.Clear();

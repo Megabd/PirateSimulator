@@ -41,6 +41,7 @@ public class ShipAuthoring : MonoBehaviour
             AddComponent(entity, new CooldownTimer { TimeLeft = 1.0f });
             AddComponent(entity, new CollisionScanTimer{ TimeLeft = 2f, Interval = 2f});
             AddComponent(entity, new AvoidanceState{Active = false,Target = float3.zero});
+            AddComponent(entity, new ShipSense { ShipSpeed = 3.0f, SenseRadius = 40f, SenseOffset = 20f });
         }
     }
 

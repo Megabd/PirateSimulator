@@ -42,18 +42,3 @@ public struct Config : IComponentData
     public bool ScheduleParallel;
     public float MapSize;
 }
-
-public static class CannonConfig
-{
-    public const float SenseDistance = 20f;
-    public const float CannonballSpeed = 10f;
-    public const float CannonballLifeTime = 5f;
-    public const float ShootWarmupTime = 0.5f;
-}
-
-public static class ShipConfig
-{
-    public const float ShipSpeed = 3f;
-    public const float SenseRadius = 40f;
-    public const float SenseOffset = 20f;
-}

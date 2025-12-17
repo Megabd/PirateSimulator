@@ -53,6 +53,21 @@ public struct HealthComponent : IComponentData
     public int startingHealth;
 }
 
+public struct ShipSense : IComponentData
+{
+    public float ShipSpeed;
+    public float SenseRadius;
+    public float SenseOffset;
+}
+
+public struct CannonData : IComponentData
+{
+    public float SenseDistance;
+    public float CannonballSpeed;
+    public float CannonballLifeTime;
+    public float ShootWarmupTime;
+}
+
 public struct CannonBalls : IComponentData
 {
     public float3 Velocity;

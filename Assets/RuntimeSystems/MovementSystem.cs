@@ -52,13 +52,13 @@ partial struct MovementSystem : ISystem
 public partial struct EntityMoveJob : IJobEntity
 {
     public float DeltaTime;
-    void Execute(Entity e, ref LocalTransform transform, ref PhysicsVelocity velocity)
+    void Execute(Entity e, ref LocalTransform transform, ref PhysicsVelocity velocity, in ShipSense sense)
     {
         float3 upVector = transform.Forward();
 
         float2 forwardXZ = math.normalize(new float2(upVector.x, upVector.z));
 
-        float2 desiredXZ = forwardXZ * ShipConfig.ShipSpeed;
+        float2 desiredXZ = forwardXZ * sense.ShipSpeed;
 
         var v = velocity;
 

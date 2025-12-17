@@ -63,7 +63,7 @@ public partial struct ShootingBallJob : IJobEntity
 
     public EntityCommandBuffer.ParallelWriter ecb;
     public LocalTransform ballXform;
-    void Execute([EntityIndexInQuery] int entityInQueryIndex, Entity e, in LocalTransform transform, ref RotationComponent rotation, ref Aim aim, in LocalToWorld worldPos, ref PrevPosComponent prevPos)
+    void Execute([EntityIndexInQuery] int entityInQueryIndex, Entity e, in LocalTransform transform, ref RotationComponent rotation, ref Aim aim, in LocalToWorld worldPos, ref PrevPosComponent prevPos, in CannonData data)
     {
         float3 currentPos = worldPos.Position;
         float3 cannonVel = (currentPos - prevPos.PrePos) / dt; 
@@ -96,8 +96,8 @@ public partial struct ShootingBallJob : IJobEntity
         float3 dir = math.normalize(worldPos.Forward);
         ecb.SetComponent(entityInQueryIndex, ball, new CannonBalls
         {
-            Velocity = cannonVel + dir * CannonConfig.CannonballSpeed,
-            Lifetime = CannonConfig.CannonballLifeTime,
+            Velocity = cannonVel + dir * data.CannonballSpeed,
+            Lifetime = data.CannonballLifeTime,
             Radius = 0.5f //canonball hitbox
         });
 
