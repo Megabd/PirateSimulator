@@ -151,10 +151,10 @@ MonoBehaviour:
   ShipPrefab: {fileID: 5593820278633140092, guid: 2704fa2785070c34cb80c55704d7147e, type: 3}
   CannonBallPrefab: {fileID: 8669331111841744554, guid: f90f72ea415f4e64fa35084419c90535, type: 3}
   SeaPrefab: {fileID: 1985540441516581328, guid: b2eac37d9afc5bd4a937d69ede33e7bf, type: 3}
-  ShipCount: 10000
-  Schedule: 1
+  ShipCount: 8000
+  Schedule: 0
   ScheduleParallel: 1
-  MapSize: 1000
+  MapSize: 600
 --- !u!4 &1409913257
 Transform:
   m_ObjectHideFlags: 0
