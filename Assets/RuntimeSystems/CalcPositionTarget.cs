@@ -58,6 +58,50 @@ partial struct CalcPositionTarget : ISystem
 
         else {
             job.Run();
+        /*foreach (var (transform, rotation, team, timer) in SystemAPI.Query<RefRO<LocalTransform>, RefRW<RotationComponent>, RefRO<TeamComponent>, RefRW<CooldownTimer>>())
+        {
+            timer.ValueRW.TimeLeft -= dt;
+            if (timer.ValueRW.TimeLeft > 0f) 
+            {
+                continue;
+            }
+            // Positions samples
+
+            float3 pos = transform.ValueRO.Position;
+            float3 fwd = math.normalize(new float3(transform.ValueRO.Forward().x, 0, transform.ValueRO.Forward().z));
+            float3 right = math.normalize(math.cross(math.forward(), fwd));
+
+            float offset = ShipConfig.SenseOffset;
+            float3 s0 = pos + fwd * offset; // forward
+            float3 s1 = pos - right * offset; // left
+            float3 s2 = pos + right * offset; // right
+            float3 s3 = pos - fwd * offset; // back
+
+            int4 allyCounts = 0;
+            bool4 hasEnemy = false;
+
+            float r = ShipConfig.SenseRadius;
+            float r2 = r * r;
+
+            foreach (var (otherTransform, health, otherTeam) in SystemAPI.Query<RefRW<LocalTransform>, RefRO<HealthComponent>, RefRO<TeamComponent>>())
+            {
+                float3 p = otherTransform.ValueRO.Position;
+                float3 d0 = p - s0; if (math.lengthsq(d0) <= r2) { allyCounts.x += otherTeam.ValueRO.redTeam == team.ValueRO.redTeam ? 1 : -1; hasEnemy.x |= otherTeam.ValueRO.redTeam != team.ValueRO.redTeam; }
+                float3 d1 = p - s1; if (math.lengthsq(d1) <= r2) { allyCounts.y += otherTeam.ValueRO.redTeam == team.ValueRO.redTeam ? 1 : -1; hasEnemy.y |= otherTeam.ValueRO.redTeam != team.ValueRO.redTeam; }
+                float3 d2 = p - s2; if (math.lengthsq(d2) <= r2) { allyCounts.z += otherTeam.ValueRO.redTeam == team.ValueRO.redTeam ? 1 : -1; hasEnemy.z |= otherTeam.ValueRO.redTeam != team.ValueRO.redTeam; }
+                float3 d3 = p - s3; if (math.lengthsq(d3) <= r2) { allyCounts.w += otherTeam.ValueRO.redTeam == team.ValueRO.redTeam ? 1 : -1; hasEnemy.w |= otherTeam.ValueRO.redTeam != team.ValueRO.redTeam; }
+            }
+            float3 chosen = s0;
+            int best = -1;
+            if (hasEnemy.x && allyCounts.x > best) { chosen = s0; best = allyCounts.x; }
+            if (hasEnemy.y && allyCounts.y > best) {chosen = s1; best = allyCounts.y; }
+            if (hasEnemy.z && allyCounts.z > best) {chosen = s2; best = allyCounts.z; }
+            if (hasEnemy.w && allyCounts.w > best) {chosen = s3; best = allyCounts.w; }
+
+            rotation.ValueRW.desiredPosition = chosen;
+            //Unity.Mathematics.Random rand = new Unity.Mathematics.Random(timer.ValueRW.Seed);
+            timer.ValueRW.TimeLeft = rand.NextFloat(5f, 10f);
+            }*/
         }
     }
 
