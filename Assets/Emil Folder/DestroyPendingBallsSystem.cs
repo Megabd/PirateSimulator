@@ -28,7 +28,7 @@ public partial struct DestroyPendingBallsSystem : ISystem
             {
                 ECB = ecb.AsParallelWriter(),
                 config = config
-            };
+            };  
 
             state.Dependency = job.ScheduleParallel(state.Dependency);
         }
@@ -50,7 +50,7 @@ public partial struct DestroyPendingBallsSystem : ISystem
                 ECB = ecb,
                 config = config
             };
-
+            state.Dependency.Complete();
             job.Run();
         }
     }
@@ -68,7 +68,7 @@ public partial struct DestroyPendingBallsJob : IJobEntity
 
     void Execute(Entity entity, ref LocalTransform transform, ref PendingDestroyTag tag)
     {
-        if (tag.destroy = true)
+        if (tag.destroy)
         {
         var rng = Unity.Mathematics.Random.CreateFromIndex(1337u);
         float2 xz = rng.NextFloat2(
@@ -91,7 +91,7 @@ public partial struct DestroyPendingBallsParallelJob : IJobEntity
 
     void Execute([EntityIndexInQuery] int sortKey, Entity entity, ref LocalTransform transform, ref PendingDestroyTag tag)
     {
-        if (tag.destroy = true)
+        if (tag.destroy)
         {
         var rng = Unity.Mathematics.Random.CreateFromIndex(1337u);
         float2 xz = rng.NextFloat2(
