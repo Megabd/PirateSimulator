@@ -25,6 +25,6 @@ public class ShipsCountUI : MonoBehaviour
     void FixedUpdate()
     {
         int count = shipQuery.CalculateEntityCount();
-        textField.text = $"Ships: {count}";
+        textField.text = $"Entities: {count}";
     }
 }
